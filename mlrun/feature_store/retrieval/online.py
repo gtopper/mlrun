@@ -57,13 +57,13 @@ def _build_feature_vector_graph(
 
 def init_feature_vector_graph(vector):
     try:
-        from storey import SyncEmitSource
+        from storey import EmitSource
     except ImportError as exc:
         raise ImportError(f"storey not installed, use pip install storey, {exc}")
 
     feature_set_objects, feature_set_fields = vector.parse_features(False)
     graph = _build_feature_vector_graph(vector, feature_set_fields, feature_set_objects)
-    graph.set_flow_source(SyncEmitSource())
+    graph.set_flow_source(EmitSource())
     server = create_graph_server(graph=graph, parameters={})
 
     cache = ResourceCache()

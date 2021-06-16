@@ -49,7 +49,7 @@ class BaseSourceDriver(DataSource):
     def to_step(self, key_field=None, time_field=None):
         import storey
 
-        return storey.SyncEmitSource()
+        return storey.EmitSource()
 
     def get_table_object(self):
         """get storey Table object"""
@@ -234,7 +234,7 @@ class OnlineSource(BaseSourceDriver):
     ):
         import storey
 
-        return storey.SyncEmitSource(
+        return storey.EmitSource(
             key_field=self.key_field or key_field,
             time_field=self.time_field or time_field,
             full_event=True,

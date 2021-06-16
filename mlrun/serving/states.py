@@ -999,7 +999,7 @@ class FlowStep(BaseStep):
                     self._wait_for_result = True
 
         # todo: allow source array (e.g. data->json loads..)
-        source = self._source or storey.SyncEmitSource()
+        source = self._source or storey.EmitSource()
         for next_state in self._start_steps:
             next_step = source.to(next_state.async_object)
             process_step(next_state, next_step, self)
