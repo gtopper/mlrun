@@ -599,7 +599,7 @@ def _ingest_with_spark(
                     "minute": minute,
                 }
                 for partition in spark_options["partitionBy"]:
-                    if partition not in df and partition in time_unit_to_op:
+                    if partition not in df.columns and partition in time_unit_to_op:
                         op = time_unit_to_op[partition]
                         df = df.withColumn(partition, op(col(timestamp_key)))
 
