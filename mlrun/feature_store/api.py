@@ -589,12 +589,12 @@ def _ingest_with_spark(
             # If partitioning by time, add the necessary columns
             if timestamp_key and "partitionBy" in spark_options:
                 from pyparsing import col
-                from pyspark.sql.functions import day, hour, minute, month, year
+                from pyspark.sql.functions import dayofmonth, hour, minute, month, year
 
                 time_unit_to_op = {
                     "year": year,
                     "month": month,
-                    "day": day,
+                    "day": dayofmonth,
                     "hour": hour,
                     "minute": minute,
                 }
