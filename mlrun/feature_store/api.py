@@ -585,6 +585,24 @@ def _ingest_with_spark(
             logger.info(
                 f"writing to target {target.name}, spark options {spark_options}"
             )
+
+            # If partitioning by time, add the necessary columns
+            if timestamp_key and "partitionBy" in spark_options:
+                from pyparsing import col
+                from pyspark.sql.functions import day, hour, minute, month, year
+
+                time_unit_to_op = {
+                    "year": year,
+                    "month": month,
+                    "day": day,
+                    "hour": hour,
+                    "minute": minute,
+                }
+                for partition in spark_options:
+                    if partition not in df and partition in time_unit_to_op:
+                        op = time_unit_to_op[partition]
+                        df = df.withColumn(partition, op(col(timestamp_key)))
+
             df.write.mode("overwrite").save(**spark_options)
             target.set_resource(featureset)
             target.update_resource_status("ready")
