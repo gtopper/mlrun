@@ -667,13 +667,14 @@ class ParquetTarget(BaseStoreTarget):
 
     def get_spark_options(self, key_column=None, timestamp_key=None):
         partition_cols = []
-        time_partitioning_granularity = self.time_partitioning_granularity
-        if not time_partitioning_granularity and self.partitioned:
-            time_partitioning_granularity = "hour"
-        for unit in ["year", "month", "day", "hour", "minute"]:
-            partition_cols.append(unit)
-            if unit == time_partitioning_granularity:
-                break
+        if timestamp_key:
+            time_partitioning_granularity = self.time_partitioning_granularity
+            if not time_partitioning_granularity and self.partitioned:
+                time_partitioning_granularity = "hour"
+            for unit in ["year", "month", "day", "hour", "minute"]:
+                partition_cols.append(unit)
+                if unit == time_partitioning_granularity:
+                    break
         result = {
             "path": store_path_to_spark(self._target_path),
             "format": "parquet",
