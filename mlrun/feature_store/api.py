@@ -588,7 +588,6 @@ def _ingest_with_spark(
 
             # If partitioning by time, add the necessary columns
             if timestamp_key and "partitionBy" in spark_options:
-                from pyparsing import col
                 from pyspark.sql.functions import dayofmonth, hour, minute, month, year
 
                 time_unit_to_op = {
@@ -598,10 +597,11 @@ def _ingest_with_spark(
                     "hour": hour,
                     "minute": minute,
                 }
+                timestamp_col = df[timestamp_key]
                 for partition in spark_options["partitionBy"]:
                     if partition not in df.columns and partition in time_unit_to_op:
                         op = time_unit_to_op[partition]
-                        df = df.withColumn(partition, op(col(timestamp_key)))
+                        df = df.withColumn(partition, op(timestamp_col))
 
             df.write.mode("overwrite").save(**spark_options)
             target.set_resource(featureset)
