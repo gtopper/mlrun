@@ -44,7 +44,7 @@ default_config = {
     "namespace": "",  # default kubernetes namespace
     "dbpath": "",  # db/api url
     # url to nuclio dashboard api (can be with user & token, e.g. https://username:password@dashboard-url.com)
-    "nuclio_dashboard_url": "",
+    "nuclio_dashboard_url": "https://nuclio.default-tenant.app.dev71.lab.iguazeng.com",
     "nuclio_version": "",
     "default_nuclio_runtime": "python:3.7",
     "nest_asyncio_enabled": "",  # enable import of nest_asyncio for corner cases with old jupyter, set "1"
@@ -113,7 +113,7 @@ default_config = {
     "httpdb": {
         "port": 8080,
         "dirpath": expanduser("~/.mlrun/db"),
-        "dsn": "sqlite:////mlrun/db/mlrun.db?check_same_thread=false",
+        "dsn": "sqlite:////tmp/mlrun.db?check_same_thread=false",
         "old_dsn": "",
         "debug": False,
         "user": "",
@@ -613,7 +613,7 @@ def read_env(env=None, prefix=env_prefix):
         config.get("httpdb", {}).get("dsn")
         == "sqlite:///mlrun.sqlite3?check_same_thread=false"
     ):
-        config["httpdb"]["dsn"] = "sqlite:////mlrun/db/mlrun.db?check_same_thread=false"
+        config["httpdb"]["dsn"] = "sqlite:////tmp/mlrun.db?check_same_thread=false"
 
     # "disabled" is the helm chart default value, we don't want that value to be set cause when this value is set we
     # use it in calls to the Nuclio package, and when the Nuclio package receives a value it simply uses it, and

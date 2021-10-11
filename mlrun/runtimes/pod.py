@@ -492,7 +492,7 @@ class KubeResource(BaseRuntime):
 
         secret_name = self._get_k8s().get_project_secret_name(project_name)
         existing_secret_keys = (
-            self._get_k8s().get_project_secret_keys(project_name) or []
+            []
         )
 
         # If no secrets were passed or auto-adding all secrets, we need all existing keys
