@@ -108,11 +108,16 @@ class RemoteStep(StepToDict, storey.SendToHttp):
 
     async def _process_event(self, event):
         # async implementation (with storey)
+        print(f'_process_event')
         body = self._get_event_or_body(event)
+        print(f'_process_event: body={body}')
         method, url, headers, body = self._generate_request(event, body)
-        return await self._client_session.request(
+        print(f'_process_event: method={method}, url={url}, headers={headers}, body={body}')
+        resp = await self._client_session.request(
             method, url, headers=headers, data=body, ssl=False
         )
+        print(f'_process_event: resp={resp}')
+        return resp
 
     async def _handle_completed(self, event, response):
         response_body = await response.read()
