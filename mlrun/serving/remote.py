@@ -38,9 +38,6 @@ def get_http_adapter(retries, backoff_factor):
 
 
 class RemoteStep(storey.SendToHttp):
-    """class for calling remote endpoints
-    """
-
     def __init__(
         self,
         url: str,
@@ -52,6 +49,7 @@ class RemoteStep(storey.SendToHttp):
         return_json: bool = True,
         input_path: str = None,
         result_path: str = None,
+        max_in_flight=None,
         retries=None,
         backoff_factor=None,
         timeout=None,
@@ -96,6 +94,7 @@ class RemoteStep(storey.SendToHttp):
             None,
             input_path=input_path,
             result_path=result_path,
+            max_in_flight=max_in_flight,
             retries=retries,
             backoff_factor=backoff_factor,
             **kwargs,
@@ -115,6 +114,9 @@ class RemoteStep(storey.SendToHttp):
         self._session = None
         self._url_function_handler = None
         self._body_function_handler = None
+
+    """class for calling remote endpoints
+    """
 
     def post_init(self, mode="sync"):
         self._endpoint = self.url
