@@ -378,14 +378,14 @@ class OutputStream:
         endpoint=None,
         access_key=None,
     ):
-        v3io_client_kwargs = {}
+        self._v3io_client_kwargs = {}
         if endpoint:
-            v3io_client_kwargs["endpoint"] = endpoint
+            self._v3io_client_kwargs["endpoint"] = endpoint
         if access_key:
-            v3io_client_kwargs["access_key"] = access_key
+            self._v3io_client_kwargs["access_key"] = access_key
 
-        self._v3io_client = v3io.dataplane.Client(**v3io_client_kwargs)
-        self._v3io_client_lock = threading.Lock()
+        v3io_client = v3io.dataplane.Client(**self._v3io_client_kwargs)
+        self._v3io_clients = {threading.current_thread(): v3io_client}
         self._container, self._stream_path = split_path(stream_path)
 
         if create:
@@ -399,7 +399,7 @@ class OutputStream:
                 retention_in_hours=retention_in_hours,
             )
 
-            response = self._v3io_client.create_stream(
+            response = v3io_client.create_stream(
                 container=self._container,
                 path=self._stream_path,
                 shard_count=shards or 1,
@@ -412,15 +412,17 @@ class OutputStream:
                 response.raise_for_status([409, 204])
 
     def push(self, data):
+        v3io_client = self._v3io_clients.get(threading.current_thread())
+        if not v3io_client:
+            v3io_client = v3io.dataplane.Client(**self._v3io_client_kwargs)
+            self._v3io_clients[threading.current_thread()] = v3io_client
+
         if not isinstance(data, list):
             data = [data]
         records = [{"data": json.dumps(rec)} for rec in data]
-        # This method (push) is passed to storey, which runs another thread. Therefore
-        # we must protect the client from concurrent access.
-        with self._v3io_client_lock:
-            self._v3io_client.put_records(
-                container=self._container, path=self._stream_path, records=records
-            )
+        v3io_client.put_records(
+            container=self._container, path=self._stream_path, records=records
+        )
 
 
 class V3ioStreamClient:
