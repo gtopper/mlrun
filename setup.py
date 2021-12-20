@@ -24,7 +24,7 @@ logger = logging.getLogger("mlrun-setup")
 
 
 def version():
-    return "0.7.1"
+    return "0.7.2"
     try:
         with open("mlrun/utils/version/version.json") as version_file:
             version_metadata = json.load(version_file)
