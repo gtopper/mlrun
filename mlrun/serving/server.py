@@ -319,7 +319,7 @@ def v2_serving_handler(context, event, get_body=False):
     if not context._server.http_trigger:
         event.path = "/"  # fix the issue that non http returns "Unsupported"
         # Workaround for IG-19780
-        if event.body == b'':
+        if event.body == b"":
             event.body = None
     return context._server.run(event, context, get_body)
 

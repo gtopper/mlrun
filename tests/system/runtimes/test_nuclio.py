@@ -1,6 +1,7 @@
 import os
 
 import pytest
+import requests
 import v3io
 from v3io.dataplane import RaiseForStatus
 
@@ -52,6 +53,39 @@ class TestNuclioRuntime(tests.system.base.TestMLRunSystem):
 
         self._logger.debug("Deploying nuclio function")
         function.deploy()
+
+    # IG-19780
+    def test_ig_19780_workaround(self):
+        code_path = str(self.assets_path / "IG_19780_workaround_test_function.py")
+
+        self._logger.debug("Creating nuclio function")
+        function = mlrun.code_to_function(
+            name="IG-19780-workaround-test-function",
+            kind="serving",
+            project=self.project_name,
+            filename=code_path,
+            image="mlrun/mlrun",
+        )
+
+        function.set_topology("flow", engine="sync")
+
+        self._logger.debug("Deploying nuclio function")
+        url = function.deploy()
+
+        for _ in range(10):
+            resp = requests.post(url)
+            assert resp.status_code == 200
+            assert resp.content == "NoneType"
+
+        for _ in range(10):
+            resp = requests.post(url, data="123")
+            assert resp.status_code == 200
+            assert resp.content == "bytes"
+
+        for _ in range(10):
+            resp = requests.post(url)
+            assert resp.status_code == 200
+            assert resp.content == "NoneType"
 
 
 @tests.system.base.TestMLRunSystem.skip_test_if_env_not_configured
