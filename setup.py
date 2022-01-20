@@ -56,6 +56,9 @@ def load_deps(path):
                 deps.append(f"{package} @ {line}")
                 continue
 
+            if line.startswith('git+https://github.com/gtopper/storey'):
+                line = 'storey~=0.10.2'
+
             # append package
             deps.append(line)
         return deps
