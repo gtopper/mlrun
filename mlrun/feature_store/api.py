@@ -702,7 +702,7 @@ def deploy_ingestion_service(
 def _ingest_with_spark(
     spark=None,
     featureset: Union[FeatureSet, str] = None,
-    source: DataSource = None,
+    source: BaseSourceDriver = None,
     targets: List[DataTargetBase] = None,
     infer_options: InferOptions = InferOptions.default(),
     mlrun_context=None,
@@ -711,10 +711,6 @@ def _ingest_with_spark(
 ):
     try:
         import pyspark.sql
-
-        spark_conf = None
-        if hasattr(source, "get_spark_conf"):
-            spark_conf = source.get_spark_conf()
 
         if spark is None or spark is True:
             # create spark context
@@ -727,17 +723,15 @@ def _ingest_with_spark(
                 session_name = (
                     f"{featureset.metadata.project}-{featureset.metadata.name}"
                 )
+            spark_conf = source.get_spark_conf()
+            session_builder = SparkSession.builder
             if spark_conf is not None:
                 conf = SparkConf()
                 for key in spark_conf:
                     conf.set(key, spark_conf[key])
-                spark = (
-                    SparkSession.builder.config(conf=conf)
-                    .appName(session_name)
-                    .getOrCreate()
-                )
-            else:
-                spark = SparkSession.builder.appName(session_name).getOrCreate()
+                session_builder.config(conf=conf)
+
+            spark = session_builder.appName(session_name).getOrCreate()
 
         if isinstance(source, pd.DataFrame):
             df = spark.createDataFrame(source)
