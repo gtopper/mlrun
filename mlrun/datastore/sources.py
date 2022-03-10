@@ -429,6 +429,71 @@ class BigQuerySource(BaseSourceDriver):
         return df
 
 
+class SnowflakeSource(BaseSourceDriver):
+    support_spark = True
+    support_storey = False
+
+    def __init__(
+        self,
+        name: str = "",
+        attributes: Dict[str, str] = None,
+        key_field: str = None,
+        time_field: str = None,
+        schedule: str = None,
+        query: str = None,
+        url: str = None,
+        user: str = None,
+        password: str = None,
+        database: str = None,
+        schema: str = None,
+        warehouse: str = None,
+    ):
+        self.query = query
+        self.attributes = attributes
+        self.key_field = key_field
+        self.time_field = time_field
+        self.schedule = schedule
+        self.url = url
+        self.user = user
+        self.password = password
+        self.database = database
+        self.schema = schema
+        self.warehouse = warehouse
+        self.spark_conf = {
+            "spark.jars.packages": "net.snowflake:spark-snowflake_2.12:2.10.0-spark_3.1,"
+            "net.snowflake:snowflake-jdbc:3.13.15",
+        }
+
+        super().__init__(
+            name,
+            attributes=attributes,
+            key_field=key_field,
+            time_field=time_field,
+            schedule=schedule,
+        )
+
+    def to_spark_df(self, session, named_view=False):
+        sfOptions = {
+            "sfURL": self.url,
+            "sfUser": self.user,
+            "sfPassword": self.password,
+            "sfDatabase": self.database,
+            "sfSchema": self.schema,
+            "sfWarehouse": self.warehouse,
+            "application": f"Iguazio-{os.getenv('SNOWFLAKE_APPLICATION', 'application')}",
+        }
+        df = (
+            session.read.format("net.snowflake.spark.snowflake")
+            .options(**sfOptions)
+            .option("query", self.query)
+            .load()
+        )
+        return df
+
+    def get_spark_conf(self):
+        return self.spark_conf
+
+
 class CustomSource(BaseSourceDriver):
     kind = "custom"
     support_storey = True
