@@ -16,7 +16,6 @@ from typing import List, Union
 from urllib.parse import urlparse
 
 import pandas as pd
-from pyspark.sql import SparkSession
 
 import mlrun
 import mlrun.errors
@@ -715,23 +714,14 @@ def _ingest_with_spark(
         if spark is None or spark is True:
             # create spark context
 
-            from pyspark import SparkConf
-
             if mlrun_context:
                 session_name = f"{mlrun_context.name}-{mlrun_context.uid}"
             else:
                 session_name = (
                     f"{featureset.metadata.project}-{featureset.metadata.name}"
                 )
-            spark_conf = source.get_spark_conf()
-            session_builder = SparkSession.builder
-            if spark_conf is not None:
-                conf = SparkConf()
-                for key in spark_conf:
-                    conf.set(key, spark_conf[key])
-                session_builder.config(conf=conf)
 
-            spark = session_builder.appName(session_name).getOrCreate()
+            spark = pyspark.sql.SparkSession.builder.appName(session_name).getOrCreate()
 
         if isinstance(source, pd.DataFrame):
             df = spark.createDataFrame(source)

@@ -88,9 +88,6 @@ class BaseSourceDriver(DataSource):
             return df
         raise NotImplementedError()
 
-    def get_spark_conf(self):
-        return None
-
     def get_spark_options(self):
         # options used in spark.read.load(**options)
         raise NotImplementedError()
@@ -462,11 +459,6 @@ class SnowflakeSource(BaseSourceDriver):
         self.database = database
         self.schema = schema
         self.warehouse = warehouse
-        # TODO: remove
-        self.spark_conf = {
-            "spark.jars.packages": "net.snowflake:spark-snowflake_2.12:2.10.0-spark_3.1,"
-            "net.snowflake:snowflake-jdbc:3.13.15",
-        }
 
         super().__init__(
             name,
@@ -493,9 +485,6 @@ class SnowflakeSource(BaseSourceDriver):
             .load()
         )
         return df
-
-    def get_spark_conf(self):
-        return self.spark_conf
 
 
 class CustomSource(BaseSourceDriver):
