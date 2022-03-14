@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import time
+import traceback
 
 import boto3
 import fsspec
@@ -58,9 +59,11 @@ class S3Store(DataStore):
         if self._filesystem:
             return self._filesystem
         try:
+            print('!!! importing s3fs')
             import s3fs  # noqa
+            print('!!! imported s3fs')
         except ImportError as exc:
-            if not silent:
+            if True:
                 raise ImportError(
                     f"AWS s3fs not installed, run pip install s3fs, {exc}"
                 )
