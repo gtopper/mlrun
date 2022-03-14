@@ -190,7 +190,10 @@ class DataStore:
             raise Exception(f"file type unhandled {url}")
 
         fs = self.get_filesystem()
+        print(f'!!! fs={fs}')
         if fs:
+            print(f'!!! self.supports_isdir()={self.supports_isdir()}')
+            print(f'!!! fs.isdir(url)={fs.isdir(url)}')
             if self.supports_isdir() and fs.isdir(url) or df_module == dd:
                 storage_options = self.get_storage_options()
                 if storage_options:
@@ -208,6 +211,7 @@ class DataStore:
                 return reader(file, **kwargs)
 
         temp_file = tempfile.NamedTemporaryFile(delete=False)
+        print(f'!!! temp_file={temp_file}')
         self.download(self._join(subpath), temp_file.name)
         df = reader(temp_file.name, **kwargs)
         remove(temp_file.name)
