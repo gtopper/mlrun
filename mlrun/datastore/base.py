@@ -190,6 +190,7 @@ class DataStore:
             raise Exception(f"file type unhandled {url}")
 
         fs = self.get_filesystem()
+        print(f'!!! data store={self}')
         print(f'!!! fs={fs}')
         if fs:
             print(f'!!! self.supports_isdir()={self.supports_isdir()}')
