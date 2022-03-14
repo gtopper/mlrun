@@ -8,6 +8,8 @@ click~=8.0
 # 3.0/3.2 iguazio system uses 1.0.1, but we needed >=1.6.0 to be compatible with k8s>=12.0 to fix scurity issue
 # since the sdk is still mark as beta (and not stable) I'm limiting to only patch changes
 kfp~=1.8.0
+# kfp depends on typing-extensions==3.10.0.2, which conflicts with other dependencies
+typing-extensions~=4.0
 nest-asyncio~=1.0
 ipython~=7.0
 nuclio-jupyter~=0.8.22
