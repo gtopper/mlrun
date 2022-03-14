@@ -63,6 +63,7 @@ class S3Store(DataStore):
             import s3fs  # noqa
             print('!!! imported s3fs')
         except ImportError as exc:
+            traceback.print_exc()
             if True:
                 raise ImportError(
                     f"AWS s3fs not installed, run pip install s3fs, {exc}"
