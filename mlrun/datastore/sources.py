@@ -468,8 +468,10 @@ class SnowflakeSource(BaseSourceDriver):
             schedule=schedule,
         )
 
-    def to_spark_df(self, session, named_view=False):
-        sfOptions = {
+    def get_spark_options(self):
+        return {
+            "format": "net.snowflake.spark.snowflake",
+            "query": self.query,
             "sfURL": self.url,
             "sfUser": self.user,
             "sfPassword": self.password,
@@ -478,13 +480,6 @@ class SnowflakeSource(BaseSourceDriver):
             "sfWarehouse": self.warehouse,
             "application": f"Iguazio-{os.getenv('SNOWFLAKE_APPLICATION', 'application')}",
         }
-        df = (
-            session.read.format("net.snowflake.spark.snowflake")
-            .options(**sfOptions)
-            .option("query", self.query)
-            .load()
-        )
-        return df
 
 
 class CustomSource(BaseSourceDriver):
