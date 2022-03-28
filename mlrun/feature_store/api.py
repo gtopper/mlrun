@@ -805,7 +805,7 @@ def _ingest_with_spark(
                             f"!!! casting column {col_name} from {col_type} to double"
                         )
                         # V3IO does not support this level of precision
-                        df.withColumn(col_name, funcs.col(col_name).cast("double"))
+                        df = df.withColumn(col_name, funcs.col(col_name).cast("double"))
             if overwrite:
                 df.write.mode("overwrite").save(**spark_options)
             else:
