@@ -25,11 +25,12 @@ from ..data_types import InferOptions, get_infer_interface
 from ..datastore.sources import BaseSourceDriver, StreamSource
 from ..datastore.store_resources import parse_store_uri
 from ..datastore.targets import (
+    NoSqlTarget,
     get_default_prefix_for_source,
     get_default_targets,
     get_target_driver,
     kind_to_driver,
-    validate_target_list, NoSqlTarget,
+    validate_target_list,
 )
 from ..db import RunDBError
 from ..model import DataSource, DataTargetBase
@@ -721,6 +722,7 @@ def _ingest_with_spark(
 ):
     try:
         import pyspark.sql
+        import pyspark.sql.functions as funcs
 
         if spark is None or spark is True:
             # create spark context
@@ -794,16 +796,10 @@ def _ingest_with_spark(
                         op = time_unit_to_op[partition]
                         df = df.withColumn(partition, op(timestamp_col))
             if isinstance(target, NoSqlTarget):
-                from pyspark.sql.functions import col
-
-                logger.info(
-                    f'!!! df.dtypes={df.dtypes}'
-                )
-
                 for col_name, col_type in df.dtypes:
-                    if col_type == "bigdecimal":
-                        # V3IO does not support BigDecimal
-                        df.withColumn("col_name", col("col_name").cast("double"))
+                    if col_type == "decimal(38,0)":
+                        # V3IO does not support this level of precision
+                        df.withColumn("col_name", funcs.col("col_name").cast("double"))
             if overwrite:
                 df.write.mode("overwrite").save(**spark_options)
             else:
