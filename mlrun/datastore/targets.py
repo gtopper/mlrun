@@ -1001,8 +1001,11 @@ class NoSqlTarget(BaseStoreTarget):
         self, df, key_column=None, timestamp_key=None, chunk_id=0, **kwargs
     ):
         from pyspark.sql.functions import col
+        from ..utils import logger
 
-        print(f'!!! df.dtypes={df.dtypes}')
+        logger.info(
+            f'!!! df.dtypes={df.dtypes}'
+        )
 
         for col_name, col_type in df.dtypes:
             if col_type == "bigdecimal":
