@@ -201,16 +201,16 @@ Define your MLRun configuration. As a minimum requirement:
 
 2. To store the artifacts on the remote server, you need to set the `MLRUN_ARTIFACT_PATH` to the desired root folder of your 
 artifact. You can use template values in the artifact path. The supported values are:
-- `{{project}}` to include the project name in the path.
-- `{{run.uid}}` to include the specific run uid in the artifact path. 
+   - `{{project}}` to include the project name in the path.
+   - `{{run.uid}}` to include the specific run uid in the artifact path. 
 
-For example:
+   For example:
 
     ```ini
     MLRUN_ARTIFACT_PATH=/User/artifacts/{{project}}
     ```
     
-or:
+   or:
 
     ```ini
     MLRUN_ARTIFACT_PATH=/User/artifacts/{{project}}/{{run.uid}}
@@ -297,12 +297,12 @@ To use MLRun with your local Docker registry, run the MLRun API service, dashboa
 ```sh
 SHARED_DIR=~/mlrun-data
 
-docker pull mlrun/jupyter:0.10.0
-docker pull mlrun/mlrun-ui:0.10.0
+docker pull mlrun/jupyter:0.10.1
+docker pull mlrun/mlrun-ui:0.10.1
 
 docker network create mlrun-network
-docker run -it -p 8080:8080 -p 30040:8888 --rm -d --network mlrun-network --name jupyter -v ${SHARED_DIR}:/home/jovyan/data mlrun/jupyter:0.10.0
-docker run -it -p 30050:80 --rm -d --network mlrun-network --name mlrun-ui -e MLRUN_API_PROXY_URL=http://jupyter:8080 mlrun/mlrun-ui:0.10.0
+docker run -it -p 8080:8080 -p 30040:8888 --rm -d --network mlrun-network --name jupyter -v ${SHARED_DIR}:/home/jovyan/data mlrun/jupyter:0.10.1
+docker run -it -p 30050:80 --rm -d --network mlrun-network --name mlrun-ui -e MLRUN_API_PROXY_URL=http://jupyter:8080 mlrun/mlrun-ui:0.10.1
 ```
 
 When the execution completes:

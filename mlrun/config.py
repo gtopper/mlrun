@@ -290,12 +290,12 @@ default_config = {
     },
     "feature_store": {
         "data_prefixes": {
-            "default": "v3io:///projects/{project}/FeatureStore/{name}/{kind}",
-            "nosql": "v3io:///projects/{project}/FeatureStore/{name}/{kind}",
+            "default": "v3io:///projects/{project}/FeatureStore/{name}/{run_id}/{kind}",
+            "nosql": "v3io:///projects/{project}/FeatureStore/{name}/{run_id}/{kind}",
         },
         "default_targets": "parquet,nosql",
         "default_job_image": "mlrun/mlrun",
-        "flush_interval": None,
+        "flush_interval": 300,
     },
     "ui": {
         "projects_prefix": "projects",  # The UI link prefix for projects
