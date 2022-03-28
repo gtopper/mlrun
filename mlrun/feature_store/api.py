@@ -29,7 +29,7 @@ from ..datastore.targets import (
     get_default_targets,
     get_target_driver,
     kind_to_driver,
-    validate_target_list,
+    validate_target_list, NoSqlTarget,
 )
 from ..db import RunDBError
 from ..model import DataSource, DataTargetBase
@@ -793,6 +793,17 @@ def _ingest_with_spark(
                     if partition not in df.columns and partition in time_unit_to_op:
                         op = time_unit_to_op[partition]
                         df = df.withColumn(partition, op(timestamp_col))
+            if isinstance(target, NoSqlTarget):
+                from pyspark.sql.functions import col
+
+                logger.info(
+                    f'!!! df.dtypes={df.dtypes}'
+                )
+
+                for col_name, col_type in df.dtypes:
+                    if col_type == "bigdecimal":
+                        # V3IO does not support BigDecimal
+                        df.withColumn("col_name", col("col_name").cast("double"))
             if overwrite:
                 df.write.mode("overwrite").save(**spark_options)
             else:
