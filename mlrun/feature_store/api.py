@@ -800,7 +800,7 @@ def _ingest_with_spark(
                     logger.info(
                         f"!!! column {col_name} is of type {col_type}"
                     )
-                    if col_type == "decimal(38,0)":
+                    if col_type.startswith("decimal("):
                         logger.info(
                             f"!!! casting column {col_name} from {col_type} to double"
                         )
