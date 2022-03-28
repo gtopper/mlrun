@@ -799,7 +799,7 @@ def _ingest_with_spark(
                 for col_name, col_type in df.dtypes:
                     if col_type == "decimal(38,0)":
                         # V3IO does not support this level of precision
-                        df.withColumn("col_name", funcs.col("col_name").cast("double"))
+                        df.withColumn(col_name, funcs.col(col_name).cast("double"))
             if overwrite:
                 df.write.mode("overwrite").save(**spark_options)
             else:
