@@ -806,6 +806,7 @@ def _ingest_with_spark(
                         )
                         # V3IO does not support this level of precision
                         df = df.withColumn(col_name, funcs.col(col_name).cast("double"))
+            logger.info(f"!!! df.dtypes={df.dtypes}")
             if overwrite:
                 df.write.mode("overwrite").save(**spark_options)
             else:
