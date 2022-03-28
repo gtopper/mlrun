@@ -797,7 +797,13 @@ def _ingest_with_spark(
                         df = df.withColumn(partition, op(timestamp_col))
             if isinstance(target, NoSqlTarget):
                 for col_name, col_type in df.dtypes:
+                    logger.info(
+                        f"!!! column {col_name} is of type {col_type}"
+                    )
                     if col_type == "decimal(38,0)":
+                        logger.info(
+                            f"!!! casting column {col_name} from {col_type} to double"
+                        )
                         # V3IO does not support this level of precision
                         df.withColumn(col_name, funcs.col(col_name).cast("double"))
             if overwrite:
