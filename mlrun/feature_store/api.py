@@ -795,22 +795,18 @@ def _ingest_with_spark(
                     if partition not in df.columns and partition in time_unit_to_op:
                         op = time_unit_to_op[partition]
                         df = df.withColumn(partition, op(timestamp_col))
+            df_to_write = df
             if isinstance(target, NoSqlTarget):
-                for col_name, col_type in df.dtypes:
-                    logger.info(
-                        f"!!! column {col_name} is of type {col_type}"
-                    )
+                for col_name, col_type in df_to_write.dtypes:
                     if col_type.startswith("decimal("):
-                        logger.info(
-                            f"!!! casting column {col_name} from {col_type} to double"
-                        )
                         # V3IO does not support this level of precision
-                        df = df.withColumn(col_name, funcs.col(col_name).cast("double"))
-            logger.info(f"!!! df.dtypes={df.dtypes}")
+                        df_to_write = df_to_write.withColumn(
+                            col_name, funcs.col(col_name).cast("double")
+                        )
             if overwrite:
-                df.write.mode("overwrite").save(**spark_options)
+                df_to_write.write.mode("overwrite").save(**spark_options)
             else:
-                df.write.mode("append").save(**spark_options)
+                df_to_write.write.mode("append").save(**spark_options)
             target.set_resource(featureset)
             target.update_resource_status("ready")
 
