@@ -103,7 +103,7 @@ Note the reference to the pre-created `registry-credentials` secret in `global.r
 helm --namespace mlrun \
     install mlrun-kit \
     --wait \
-    --timeout 960 \
+    --timeout 960s \
     --set global.registry.url=<registry-url> \
     --set global.registry.secretName=registry-credentials \
     v3io-stable/mlrun-kit
@@ -123,7 +123,7 @@ command as follows:
 helm --namespace mlrun \
     install my-mlrun \
     --wait \
-    --timeout 960 \
+    --timeout 960s \
     --set global.registry.url=<registry URL e.g. index.docker.io/iguazio > \
     --set global.registry.secretName=registry-credentials \
     --set global.externalHostAddress=$(minikube ip) \
@@ -161,7 +161,7 @@ If that's not the case, the different components are available on the provided `
 
 ## Start working
 
-Open Jupyter Lab on [**jupyter-lab UI**](http://localhost:30040) and run the code in [**quick-start.ipynb**](https://github.com/mlrun/mlrun/blob/master/docs/quick-start.ipynb) notebook.
+Open Jupyter Lab on [**jupyter-lab UI**](http://localhost:30040) and run the code in [**quick-start.ipynb**](https://github.com/mlrun/mlrun/blob/master/docs/quick-start/quick-start.ipynb) notebook.
 
 ```{admonition} Important
 Make sure to save your changes in the `data` folder within the Jupyter Lab. The root folder and any other folder do not retain the changes when you restart the Jupyter Lab.
