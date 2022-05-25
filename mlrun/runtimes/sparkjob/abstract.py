@@ -514,8 +514,8 @@ with ctx:
         self._enrich_job(job)
 
         if self.spec.command:
-            if "://" not in self.spec.command:
-                self.spec.command = "local://" + self.spec.command
+            # if "://" not in self.spec.command:
+            #     self.spec.command = "local://" + self.spec.command
             update_in(job, "spec.mainApplicationFile", self.spec.command)
 
         verify_list_and_update_in(job, "spec.arguments", self.spec.args or [], str)
