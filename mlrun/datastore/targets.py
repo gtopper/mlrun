@@ -606,6 +606,7 @@ class BaseStoreTarget(DataTargetBase):
         )
         target = self._target
         target.run_id = self.run_id
+        target.partitioned = self.partitioned
         target.status = status or target.status or "created"
         target.updated = now_date().isoformat()
         target.size = size
