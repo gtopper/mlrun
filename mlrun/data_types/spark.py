@@ -16,7 +16,7 @@ from datetime import datetime
 from os import environ
 
 import numpy as np
-from pyspark.sql.types import BooleanType, DoubleType, TimestampType
+from pyspark.sql.types import BooleanType, DoubleType, IntegerType, TimestampType
 
 from .data_types import InferOptions, spark_to_value_type
 
@@ -134,14 +134,17 @@ def get_df_stats_spark(df, options, num_bins=20, sample_size=None):
     for field in df_after_type_casts.schema.fields:
         is_timestamp = isinstance(field.dataType, TimestampType)
         is_boolean = isinstance(field.dataType, BooleanType)
+        target_type = None
         if is_timestamp:
             timestamp_columns.add(field.name)
+            target_type = DoubleType()
         if is_boolean:
             boolean_columns.add(field.name)
+            target_type = IntegerType()
         if is_timestamp or is_boolean:
             df_after_type_casts = df_after_type_casts.withColumn(
                 field.name,
-                df_after_type_casts[field.name].cast(DoubleType()),
+                df_after_type_casts[field.name].cast(target_type),
             )
 
     # if a column named "summary" already exists, we have to rename it to something else and back
