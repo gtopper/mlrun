@@ -53,7 +53,7 @@ def load_deps(path):
             # e.g.: git+https://github.com/nuclio/nuclio-jupyter.git@some-branch#egg=nuclio-jupyter
             if "#egg=" in line:
                 _, package = line.split("#egg=")
-                deps.append(f"{package} @ {line}")
+                #deps.append(f"{package} @ {line}")
                 continue
 
             # append package
