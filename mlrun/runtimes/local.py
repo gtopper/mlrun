@@ -323,7 +323,7 @@ class LocalRuntime(BaseRuntime, ParallelRunner):
                 # set_state here is mainly for sanity, as we will raise RunError which is expected to be handled
                 # by the caller and will set the state to error ( in `update_run_state` )
                 context.set_state(error=str(exc), commit=True)
-                context.logger.error(f"run error, {traceback.format_exc()}")
+                logger.error(f"run error, {traceback.format_exc()}")
                 raise RunError(
                     "failed on pre-loading / post-running of the function"
                 ) from exc
