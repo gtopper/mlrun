@@ -233,7 +233,10 @@ class SparkFeatureMerger(BaseMerger):
         return self._result_df
 
     @classmethod
-    def get_default_image(cls):
-        return AbstractSparkRuntime._get_default_deployed_mlrun_image_name(
-            with_gpu=False
-        )
+    def get_default_image(cls, kind):
+        if kind == "spark":
+            return AbstractSparkRuntime._get_default_deployed_mlrun_image_name(
+                with_gpu=False
+            )
+        else:
+            return super().get_default_image(kind)

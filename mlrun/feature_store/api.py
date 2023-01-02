@@ -161,11 +161,13 @@ def get_offline_features(
 
     merger_engine = get_merger(engine)
 
-    if run_config:
+    if run_config and not run_config.local:
         return run_merge_job(
             feature_vector,
             target,
             merger_engine,
+            engine,
+            engine_args,
             entity_rows,
             timestamp_column=entity_timestamp_column,
             run_config=run_config,
