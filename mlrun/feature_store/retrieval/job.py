@@ -49,7 +49,7 @@ def run_merge_job(
         if not function_ref.url:
             function_ref.code = _default_merger_handler.replace(
                 "{{{engine}}}", merger.__name__
-            ).replace("{{{engine_args}}}", str(engine_args))
+            ).replace("{{{engine_args}}}", str(engine_args or {}))
         run_config.function = function_ref
 
     function = run_config.to_function(kind, merger.get_default_image(kind))
