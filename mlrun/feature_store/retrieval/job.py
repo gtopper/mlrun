@@ -38,17 +38,19 @@ def run_merge_job(
         raise mlrun.errors.MLRunInvalidArgumentError("target object must be specified")
     name = f"{name}_merger"
     run_config = run_config or RunConfig()
+    is_spark_merger = hasattr(merger, "spark")
+    kind = run_config.kind or ("spark" if is_spark_merger else "job")
     if not run_config.function:
         function_ref = vector.spec.function.copy()
         if function_ref.is_empty():
-            function_ref = FunctionReference(name=name, kind="job")
+            function_ref = FunctionReference(name=name, kind=kind)
         if not function_ref.url:
             function_ref.code = _default_merger_handler.replace(
                 "{{{merger}}}", merger.__name__
             )
         run_config.function = function_ref
 
-    function = run_config.to_function("job", merger.get_default_image())
+    function = run_config.to_function(kind, merger.get_default_image())
     function.metadata.project = vector.metadata.project
     function.metadata.name = function.metadata.name or name
     task = new_task(
