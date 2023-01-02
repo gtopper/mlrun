@@ -52,7 +52,7 @@ def run_merge_job(
             ).replace("{{{engine_args}}}", str(engine_args))
         run_config.function = function_ref
 
-    function = run_config.to_function(kind, merger.get_default_image())
+    function = run_config.to_function(kind, merger.get_default_image(kind))
     function.metadata.project = vector.metadata.project
     function.metadata.name = function.metadata.name or name
     task = new_task(
