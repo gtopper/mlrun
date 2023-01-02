@@ -19,13 +19,12 @@ from mlrun.model import DataTargetBase, new_task
 from mlrun.runtimes.function_reference import FunctionReference
 from mlrun.utils import logger
 
-from .. import FeatureVector
 from ..common import RunConfig
 from .base import BaseMerger
 
 
 def run_merge_job(
-    vector: FeatureVector,
+    vector,
     target: DataTargetBase,
     merger: BaseMerger,
     engine: str,
