@@ -13,12 +13,14 @@
 # limitations under the License.
 #
 import uuid
+from typing import Optional
 
 import mlrun
 from mlrun.model import DataTargetBase, new_task
 from mlrun.runtimes.function_reference import FunctionReference
 from mlrun.utils import logger
 
+from ...runtimes import RuntimeKinds
 from ..common import RunConfig
 from .base import BaseMerger
 
@@ -29,6 +31,7 @@ def run_merge_job(
     merger: BaseMerger,
     engine: str,
     engine_args: dict,
+    spark_service: Optional[str] = None,
     entity_rows=None,
     timestamp_column=None,
     run_config=None,
@@ -53,6 +56,8 @@ def run_merge_job(
         run_config.function = function_ref
 
     function = run_config.to_function(kind, merger.get_default_image(kind))
+    if run_config.kind == RuntimeKinds.remotespark:
+        function.with_spark_service(spark_service=spark_service)
     function.metadata.project = vector.metadata.project
     function.metadata.name = function.metadata.name or name
     task = new_task(

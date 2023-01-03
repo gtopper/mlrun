@@ -100,6 +100,7 @@ def get_offline_features(
     update_stats: bool = False,
     engine: str = None,
     engine_args: dict = None,
+    spark_service: Optional[str] = None,
     query: str = None,
 ) -> OfflineVectorResponse:
     """retrieve offline feature vector results
@@ -146,7 +147,8 @@ def get_offline_features(
     :param update_stats:    update features statistics from the requested feature sets on the vector. Default is False.
     :param engine:          processing engine kind ("local", "dask", or "spark")
     :param engine_args:     kwargs for the processing engine
-    :param query:          The query string used to filter rows
+    :param spark_service:   Name of the spark service to be used (when using a remote-spark runtime)
+    :param query:           The query string used to filter rows
     """
     if isinstance(feature_vector, FeatureVector):
         update_stats = True
@@ -168,6 +170,7 @@ def get_offline_features(
             merger_engine,
             engine,
             engine_args,
+            spark_service,
             entity_rows,
             timestamp_column=entity_timestamp_column,
             run_config=run_config,

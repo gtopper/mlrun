@@ -883,7 +883,6 @@ class TestFeatureStoreSparkEngine(TestMLRunSystem):
             fv_name,
             features,
         )
-        my_fv.spec.with_indexes = True
         my_fv.save()
         target = ParquetTarget("mytarget", path=self.get_remote_pq_target_path())
         resp = fstore.get_offline_features(
@@ -892,12 +891,13 @@ class TestFeatureStoreSparkEngine(TestMLRunSystem):
             query="bad>6 and bad<8",
             run_config=fstore.RunConfig(local=False, kind="remote-spark"),
             engine="spark",
+            spark_service=self.spark_service,
         )
         resp_df = resp.to_dataframe()
         target_df = target.as_df()
         source_df = source.to_dataframe()
-        source_df.set_index(key, drop=True, inplace=True)
         expected_df = source_df[source_df["bad"] == 7][["bad", "department"]]
+        expected_df.reset_index(drop=True, inplace=True)
         assert resp_df.equals(target_df)
         assert resp_df[["bad", "department"]].equals(expected_df)
 
