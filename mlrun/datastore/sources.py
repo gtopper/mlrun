@@ -75,6 +75,8 @@ class BaseSourceDriver(DataSource):
         if self.time_field:
             time_field = self.time_field
 
+        print(f"filter_df_start_end_time: start_time={self.start_time}")
+
         if self.start_time or self.end_time:
             self.start_time = (
                 datetime.min if self.start_time is None else self.start_time

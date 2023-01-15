@@ -569,6 +569,9 @@ def ingest(
 
     if isinstance(source, DataSource):
         for target in featureset.status.targets:
+            print(f"target.last_written={target.last_written}")
+            print(f"source.schedule={source.schedule}")
+            print(f"source.start_time={source.start_time}")
             if (
                 target.last_written == datetime.min
                 and source.schedule
@@ -576,6 +579,7 @@ def ingest(
             ):
                 # datetime.min is a special case that indicated that nothing was written in storey. we need the fix so
                 # in the next scheduled run, we will have the same start time
+                print("target.last_written = source.start_time")
                 target.last_written = source.start_time
 
     _post_ingestion(mlrun_context, featureset, spark_context)

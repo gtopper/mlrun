@@ -253,10 +253,16 @@ class FeatureSetStatus(ModelObj):
     def update_last_written_for_target(self, target_path: str, last_written: datetime):
         for target in self._targets:
             actual_target_path = get_target_driver(target).get_target_path()
+            print(
+                f"update_last_written_for_target: target={target} actual_target_path={actual_target_path}"
+            )
             if (
                 actual_target_path == target_path
                 or actual_target_path.rstrip("/") == target_path
             ):
+                print(
+                    "update_last_written_for_target: target.last_written = last_written"
+                )
                 target.last_written = last_written
 
 
