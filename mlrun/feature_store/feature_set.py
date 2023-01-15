@@ -261,7 +261,7 @@ class FeatureSetStatus(ModelObj):
                 or actual_target_path.rstrip("/") == target_path
             ):
                 print(
-                    "update_last_written_for_target: target.last_written = last_written"
+                    f"update_last_written_for_target: target.last_written = {last_written}"
                 )
                 target.last_written = last_written
 

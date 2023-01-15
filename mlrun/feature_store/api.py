@@ -445,13 +445,19 @@ def ingest(
     if isinstance(source, DataSource) and source.schedule:
         min_time = datetime.max
         for target in targets or featureset.status.targets:
+            print(f"target.last_written={target.last_written}")
             if target.last_written:
                 cur_last_written = target.last_written
+                print(f"1 cur_last_written={cur_last_written}")
                 if isinstance(cur_last_written, str):
                     cur_last_written = datetime.fromisoformat(target.last_written)
+                print(f"2 cur_last_written={cur_last_written}")
                 if cur_last_written < min_time:
                     min_time = cur_last_written
+                print(f"3 cur_last_written={cur_last_written}")
+        print(f"min_time={min_time}")
         if min_time != datetime.max:
+            print(f"source.start_time = {min_time}")
             source.start_time = min_time
             time_zone = min_time.tzinfo
             source.end_time = datetime.now(tz=time_zone)
