@@ -439,11 +439,14 @@ def ingest(
             )
 
         filter_time_string = ""
+        print(f"source.schedule={source.schedule}")
         if source.schedule:
+            print(f"reloading fset {featureset}")
             featureset.reload(update_spec=False)
 
     if isinstance(source, DataSource) and source.schedule:
         min_time = datetime.max
+        print(f"featureset.status.to_dict()={featureset.status.to_dict()}")
         for target in targets or featureset.status.targets:
             print(f"target.last_written={target.last_written}")
             if target.last_written:
