@@ -447,7 +447,7 @@ def ingest(
     if isinstance(source, DataSource) and source.schedule:
         min_time = datetime.max
         print(f"featureset.status.to_dict()={featureset.status.to_dict()}")
-        for target in targets or featureset.status.targets:
+        for target in featureset.status.targets:
             print(f"target.last_written={target.last_written}")
             if target.last_written:
                 cur_last_written = target.last_written
