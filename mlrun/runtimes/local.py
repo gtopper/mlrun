@@ -357,6 +357,7 @@ class LocalRuntime(BaseRuntime, ParallelRunner):
                     new_args.append(arg)
                 args = new_args
 
+            print(f"!!! run_exec({cmd}, {args}, env={env}, cwd={execution._current_workdir})")
             sout, serr = run_exec(cmd, args, env=env, cwd=execution._current_workdir)
             log_std(self._db_conn, runobj, sout, serr, skip=self.is_child, show=False)
 
