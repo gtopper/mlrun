@@ -14,6 +14,7 @@
 
 import json
 import logging
+import traceback
 from enum import Enum
 from sys import stdout
 from traceback import format_exception
@@ -210,6 +211,9 @@ def create_logger(
     formatter_instance = _create_formatter_instance(
         FormatterKinds(formatter_kind.lower())
     )
+
+    print(f"!!! create_logger(level={level}, formatter_kind={formatter_kind}, name={name}, stream={stream})")
+    traceback.print_stack()
 
     # set handler
     logger_instance.set_handler("default", stream or stdout, formatter_instance)
