@@ -148,6 +148,7 @@ class Logger(object):
 
     def debug(self, message, *args, **kw_args):
         self._update_bound_vars_and_log(logging.DEBUG, message, *args, **kw_args)
+        traceback.print_stack()
 
     def info(self, message, *args, **kw_args):
         self._update_bound_vars_and_log(logging.INFO, message, *args, **kw_args)
