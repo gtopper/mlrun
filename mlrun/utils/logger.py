@@ -93,6 +93,7 @@ class Logger(object):
     def set_handler(
         self, handler_name: str, file: IO[str], formatter: logging.Formatter
     ):
+        print(f"!!! set_handler() start: len(self._logger.handlers)={len(self._logger.handlers)}")
 
         # check if there's a handler by this name
         for handler in self._logger.handlers:
@@ -109,6 +110,8 @@ class Logger(object):
 
         # add the handler to the logger
         self._logger.addHandler(stream_handler)
+
+        print(f"!!! set_handler() end: len(self._logger.handlers)={len(self._logger.handlers)}")
 
     def get_child(self, suffix):
         """
