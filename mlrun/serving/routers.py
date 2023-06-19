@@ -202,6 +202,7 @@ class ModelRouter(BaseModelRouter):
             event.body = {"models": list(self.routes.keys())}
             return event
 
+        print(f"!!! _handle_event: type(self.context.logger)={type(self.context.logger)}")
         self.context.logger.debug(f"router run model {name}, op={subpath}")
         event.path = subpath
         response = route.run(event)
@@ -852,6 +853,7 @@ class VotingEnsemble(ParallelRun):
 
         # Extract route information
         name, route, subpath = self._resolve_route(event.body, event.path)
+        print(f"!!! do_event: type(self.context.logger)={type(self.context.logger)}")
         self.context.logger.debug(f"router run model {name}, op={subpath}")
         event.path = subpath
 
