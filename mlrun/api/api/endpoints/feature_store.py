@@ -418,6 +418,10 @@ async def ingest_feature_set(
             DataTargetBase.from_dict(data_target.dict())
             for data_target in ingest_parameters.targets
         ]
+    elif feature_set.spec.passthrough:
+        data_targets = [
+            target for target in feature_set.spec.targets if not target.online
+        ]
 
     run_config = RunConfig(
         owner=username,
