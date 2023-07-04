@@ -475,9 +475,11 @@ class FeatureSet(ModelObj):
                 "targets can only be None or a list of kinds or DataTargetBase derivatives"
             )
         targets = targets or []
+        print(f"!!! with_defaults={with_defaults}")
         if with_defaults:
             self.spec.with_default_targets = True
             targets.extend(get_default_targets(offline_only=self.spec.passthrough))
+            print(f"!!! targets={targets}")
         else:
             self.spec.with_default_targets = False
 
@@ -486,6 +488,8 @@ class FeatureSet(ModelObj):
 
         if default_final_step:
             self.spec.graph.final_step = default_final_step
+
+        print(f"!!! self.spec.targets={self.spec.targets}")
 
     def __set_targets_add_targets_helper(self, targets):
         """
