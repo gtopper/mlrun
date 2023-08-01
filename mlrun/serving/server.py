@@ -320,6 +320,7 @@ class GraphServer(ModelObj):
 
     def wait_for_completion(self):
         """wait for async operation to complete"""
+        print("!!! in wait_for_completion()")
         self.graph.wait_for_completion()
 
 
