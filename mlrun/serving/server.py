@@ -355,23 +355,11 @@ def v2_serving_init(context, namespace=None):
         context.logger.info(server.to_yaml())
 
     print("!!! in v2_serving_init")
-    print(f"!!! hasattr(context, 'platform')={hasattr(context, 'platform')}")
-    print(
-        f"!!! hasattr(context.platform, 'set_termination_callback')="
-        f"{hasattr(context.platform, 'set_termination_callback')}"
-    )
-    print(f"!!! hasattr(context, 'graph')={hasattr(context, 'graph')}")
-    print(
-        f"!!! hasattr(context.graph, 'wait_for_completion')={hasattr(context.graph, 'wait_for_completion')}"
-    )
-    if (
-        hasattr(context, "platform")
-        and hasattr(context.platform, "set_termination_callback")
-        and hasattr(context, "graph")
-        and hasattr(context.graph, "wait_for_completion")
+    if hasattr(context, "platform") and hasattr(
+        context.platform, "set_termination_callback"
     ):
         print("!!! calling set_termination_callback()")
-        context.platform.set_termination_callback(context.graph.wait_for_completion)
+        context.platform.set_termination_callback(server.wait_for_completion)
 
 
 def v2_serving_handler(context, event, get_body=False):
