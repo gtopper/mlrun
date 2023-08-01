@@ -41,24 +41,6 @@ def nuclio_init_hook(context, data, kind):
 def nuclio_jobs_init(context, data):
     setattr(context, "mlrun_handler", nuclio_jobs_handler)
     setattr(context, "globals", data)
-    print("!!! in nuclio_jobs_init")
-    print(f"!!! hasattr(context, 'platform')={hasattr(context, 'platform')}")
-    print(
-        f"!!! hasattr(context.platform, 'set_termination_callback')="
-        f"{hasattr(context.platform, 'set_termination_callback')}"
-    )
-    print(f"!!! hasattr(context, 'graph')={hasattr(context, 'graph')}")
-    print(
-        f"!!! hasattr(context.graph, 'wait_for_completion')={hasattr(context.graph, 'wait_for_completion')}"
-    )
-    if (
-        hasattr(context, "platform")
-        and hasattr(context.platform, "set_termination_callback")
-        and hasattr(context, "graph")
-        and hasattr(context.graph, "wait_for_completion")
-    ):
-        print("!!! calling set_termination_callback()")
-        context.platform.set_termination_callback(context.graph.wait_for_completion)
 
 
 def nuclio_jobs_handler(context, event):
