@@ -39,6 +39,7 @@ import mlrun.feature_store as fstore
 import tests.conftest
 from mlrun.config import config
 from mlrun.data_types.data_types import InferOptions, ValueType
+from mlrun.datastore.datastore_profile import DatastoreProfileRedis
 from mlrun.datastore.sources import (
     CSVSource,
     DataFrameSource,
@@ -249,7 +250,9 @@ class TestFeatureStore(TestMLRunSystem):
         )
         resp = fstore.get_offline_features(
             vector,
-            entity_rows=trades,
+            entity_rows=trades.set_index(
+                "ticker"
+            ),  # test when the relation keys are indexes.
             entity_timestamp_column=entity_timestamp_column,
             engine=engine,
         )
@@ -2140,7 +2143,9 @@ class TestFeatureStore(TestMLRunSystem):
         not mlrun.mlconf.redis.url,
         reason="mlrun.mlconf.redis.url is not set, skipping until testing against real redis",
     )
-    @pytest.mark.parametrize("target_redis, ", ["", "redis://:aaa@localhost:6379"])
+    @pytest.mark.parametrize(
+        "target_redis, ", ["", "redis://:aaa@localhost:6379", "ds://dsname"]
+    )
     def test_purge_redis(self, target_redis):
         key = "patient_id"
         fset = fstore.FeatureSet(
@@ -2151,6 +2156,13 @@ class TestFeatureStore(TestMLRunSystem):
             "mycsv",
             path=path,
         )
+        if target_redis.startswith("ds://"):
+            project = mlrun.get_or_create_project(self.project_name)
+            profile = DatastoreProfileRedis(
+                name=target_redis[len("ds://") :], endpoint_url=mlrun.mlconf.redis.url
+            )
+            project.register_datastore_profile(profile)
+
         targets = [
             CSVTarget(),
             CSVTarget(name="specified-path", path="v3io:///bigdata/csv-purge-test.csv"),
