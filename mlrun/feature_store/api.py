@@ -798,6 +798,9 @@ def deploy_ingestion_service(
     :param run_config:    service runtime configuration (function object/uri, resources, etc..)
     :param verbose:       verbose log
     """
+
+    print("!!! in deploy_ingestion_service")
+
     if isinstance(featureset, str):
         featureset = get_feature_set_by_uri(featureset)
 
