@@ -868,6 +868,8 @@ class StreamSource(OnlineSource):
             kwargs["explicit_ack_mode"] = "explicitOnly"
             kwargs["workerAllocationMode"] = "static"
 
+        print(f"!!! add_v3io_stream_trigger kwargs={kwargs}")
+
         function.add_v3io_stream_trigger(
             self.path,
             self.name,
