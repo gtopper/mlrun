@@ -360,12 +360,6 @@ class ParquetSource(BaseSourceDriver):
             **reader_args,
         )
 
-    def to_spark_df(self, session, named_view=False, time_field=None, columns=None):
-        df = super().to_spark_df(
-            session, named_view=named_view, time_field=time_field, columns=columns
-        )
-        df.drop()
-
 
 class BigQuerySource(BaseSourceDriver):
     """
