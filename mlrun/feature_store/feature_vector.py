@@ -695,13 +695,14 @@ class FeatureVector(ModelObj):
             for key in feature_set.spec.entities.keys():
                 if key not in index_keys:
                     index_keys.append(key)
-            for name, _ in fields:
+            for name, alias in fields:
                 if name in feature_set.status.stats and update_stats:
                     self.status.stats[name] = feature_set.status.stats[name]
                 if name in feature_set.spec.features.keys():
                     feature = feature_set.spec.features[name].copy()
                     feature.origin = f"{feature_set.fullname}.{name}"
-                    self.status.features[name] = feature
+                    feature.name = alias or name
+                    self.status.features[alias or name] = feature
 
         self.status.index_keys = index_keys
         return feature_set_objects, feature_set_fields
@@ -865,7 +866,7 @@ class OnlineVectorService:
                         ):
                             data[name] = self._impute_values.get(name, v)
                 if not self.vector.spec.with_indexes:
-                    for name in self._all_fs_entities:
+                    for name in self.vector.status.index_keys:
                         data.pop(name, None)
                 if not any(data.values()):
                     data = None

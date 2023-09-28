@@ -20,6 +20,7 @@ from mlrun.model import DataTargetBase, new_task
 from mlrun.runtimes.function_reference import FunctionReference
 from mlrun.utils import logger
 
+from ...datastore.targets import get_target_driver
 from ...runtimes import RuntimeKinds
 from ..common import RunConfig
 from .base import BaseMerger
@@ -162,16 +163,10 @@ class RemoteVectorResponse:
         :param kwargs:    extended DataItem.as_df() args
         """
 
-        file_format = kwargs.get("format")
-        if not file_format:
-            file_format = self.run.status.results["target"]["kind"]
-        df = mlrun.get_dataitem(self.target_uri).as_df(
-            columns=columns, df_module=df_module, format=file_format, **kwargs
-        )
+        target = get_target_driver(self.run.status.results["target"])
+        df = target.as_df(columns=columns, df_module=df_module, **kwargs)
         if self.with_indexes:
-            df.set_index(
-                list(self.vector.spec.entity_fields.keys()), inplace=True, drop=True
-            )
+            df = df.set_index(self.vector.status.index_keys, drop=True)
         return df
 
     @property

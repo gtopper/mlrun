@@ -21,7 +21,7 @@ import pandas as pd
 import mlrun
 from mlrun.datastore.targets import CSVTarget, ParquetTarget
 from mlrun.feature_store.feature_set import FeatureSet
-from mlrun.feature_store.feature_vector import Feature, JoinGraph
+from mlrun.feature_store.feature_vector import JoinGraph
 
 from ...utils import logger, str_to_timestamp
 from ..feature_vector import OfflineVectorResponse
@@ -153,15 +153,7 @@ class BaseMerger(abc.ABC):
             if is_persistent_vector:
                 target_status = self._target.update_resource_status("ready", size=size)
                 logger.info(f"wrote target: {target_status}")
-                self.vector.save()
-        if not self._drop_indexes:
-            self.vector.spec.entity_fields = [
-                Feature(name=feature, value_type=self._result_df[feature].dtype)
-                if self._result_df[feature].dtype.name != "object"
-                else Feature(name=feature, value_type="str")
-                for feature in self._index_columns
-            ]
-            self.vector.save()
+        self.vector.save()
 
     def _set_indexes(self, df):
         if self._index_columns and not self._drop_indexes:
