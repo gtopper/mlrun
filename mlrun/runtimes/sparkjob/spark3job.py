@@ -896,15 +896,6 @@ class Spark3Runtime(KubejobRuntime):
         gpu_quantity = resources[gpu_type[0]] if gpu_type else 0
         return gpu_type[0] if gpu_type else None, gpu_quantity
 
-    def _pre_run(self, runobj: RunObject, execution: MLClientCtx):
-        if self.spec.build.source and self.spec.build.load_source_on_run:
-            raise mlrun.errors.MLRunPreconditionFailedError(
-                "Sparkjob does not support loading source code on run, "
-                "use func.with_source_archive(pull_at_runtime=False)"
-            )
-
-        super()._pre_run(runobj, execution)
-
     def _update_igz_jars(self, deps):
         if not self.spec.deps:
             self.spec.deps = {}
@@ -1009,28 +1000,6 @@ class Spark3Runtime(KubejobRuntime):
             self.spec.restart_policy,
             "submission_retry_interval",
             submission_retry_interval,
-        )
-
-    def with_source_archive(
-        self, source, workdir=None, handler=None, pull_at_runtime=True, target_dir=None
-    ):
-        """load the code from git/tar/zip archive at runtime or build
-
-        :param source:          valid path to git, zip, or tar file, e.g.
-                                git://github.com/mlrun/something.git
-                                http://some/url/file.zip
-        :param handler:         default function handler
-        :param workdir:         working dir relative to the archive root (e.g. './subdir') or absolute to the image root
-        :param pull_at_runtime: not supported for spark runtime, must be False
-        :param target_dir:      target dir on runtime pod for repo clone / archive extraction
-        """
-        if pull_at_runtime:
-            raise mlrun.errors.MLRunInvalidArgumentError(
-                "pull_at_runtime is not supported for spark runtime, use pull_at_runtime=False"
-            )
-
-        super().with_source_archive(
-            source, workdir, handler, pull_at_runtime, target_dir
         )
 
     def is_deployed(self):
