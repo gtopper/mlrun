@@ -249,8 +249,6 @@ class BaseMerger(abc.ABC):
                     f"does not have a column named `{time_column}` to filter on."
                 )
 
-            if self._drop_indexes:
-                self._append_drop_column(time_column)
             if (start_time or end_time) and time_column:
                 filtered = True
 
