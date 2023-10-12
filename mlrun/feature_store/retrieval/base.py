@@ -320,10 +320,14 @@ class BaseMerger(abc.ABC):
         )
 
         all_columns = None
+        print(f"self._drop_indexes={self._drop_indexes}")
+        print(f"result_timestamp={result_timestamp}")
+        print(f"self._alias.values()={self._alias.values()}")
         if not self._drop_indexes and result_timestamp:
             if result_timestamp not in self._alias.values():
                 self._update_alias(key=result_timestamp, val=result_timestamp)
             all_columns = list(self._alias.keys())
+        print(f"all_columns={all_columns}")
 
         df_temp = self._rename_columns_and_select(
             self._result_df, self._alias, columns=all_columns
