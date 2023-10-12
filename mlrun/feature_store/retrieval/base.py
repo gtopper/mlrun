@@ -138,7 +138,7 @@ class BaseMerger(abc.ABC):
 
     def _write_to_offline_target(self, timestamp_key=None):
         save_vector = False
-        if not self._drop_indexes and timestamp_key not in self._drop_columns:
+        if not self._drop_indexes:
             self.vector.status.timestamp_key = timestamp_key
             save_vector = True
         if self._target:
