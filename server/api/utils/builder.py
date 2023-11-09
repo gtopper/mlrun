@@ -120,7 +120,7 @@ def make_dockerfile(
 
             dock += f"COPY --from=extractor {source_dir}/ {workdir}\n"
         else:
-            dock += f"ADD {source} {workdir}\n"
+            dock += f"ADD --chown=1000:1000 {source} {workdir}\n"
 
         if user_unix_id is not None and enriched_group_id is not None:
             dock += f"RUN chown -R {user_unix_id}:{enriched_group_id} {workdir}\n"
