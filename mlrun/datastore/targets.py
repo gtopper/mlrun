@@ -851,15 +851,6 @@ class ParquetTarget(BaseStoreTarget):
         for key_column in key_columns:
             tuple_key_columns.append((key_column.name, key_column.value_type))
 
-        if self.attributes:
-            self.attributes[
-                "update_last_written"
-            ] = featureset_status.update_last_written_for_target
-        else:
-            self.attributes = {
-                "update_last_written": featureset_status.update_last_written_for_target
-            }
-
         graph.add_step(
             name=self.name or "ParquetTarget",
             after=after,
@@ -874,6 +865,7 @@ class ParquetTarget(BaseStoreTarget):
             or self._get_store().get_storage_options(),
             max_events=self.max_events,
             flush_after_seconds=self.flush_after_seconds,
+            update_last_written=featureset_status.update_last_written_for_target,
             **self.attributes,
         )
 
