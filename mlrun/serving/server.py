@@ -351,8 +351,8 @@ def v2_serving_init(context, namespace=None):
     setattr(context, "mlrun_handler", serving_handler)
     setattr(context, "_server", server)
     context.logger.info_with("Serving was initialized", verbose=server.verbose)
-    if server.verbose:
-        context.logger.info(server.to_yaml())
+    # if server.verbose:
+    #     context.logger.info(server.to_yaml())
 
     if hasattr(context, "platform") and hasattr(
         context.platform, "set_termination_callback"
