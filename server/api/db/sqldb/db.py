@@ -60,6 +60,7 @@ from mlrun.utils import (
 )
 from server.api.db.base import DBInterface
 from server.api.db.sqldb.helpers import (
+    MemoizationCache,
     generate_query_predicate_for_name,
     label_set,
     run_labels,
@@ -2797,18 +2798,19 @@ class SQLDB(DBInterface):
         # Using a similar mechanism here to assign tags to feature sets as is used in list_functions. Please refer
         # there for some comments explaining the logic.
         results = []
+        # SQLAlchemy avoids duplicating the object. Use memoization to avoid introducing duplication on transform.
+        memo = MemoizationCache(transform_fn)
         if default_tag:
-            results.append(transform_fn(object_record, default_tag))
+            results.append(memo.memoize(object_record, default_tag))
         else:
             object_tags = obj_id_tags.get(object_record.id, [])
             if len(object_tags) == 0 and not object_record.uid.startswith(
                 unversioned_tagged_object_uid_prefix
             ):
-                new_object = transform_fn(object_record)
-                results.append(new_object)
+                results.append(memo.memoize(object_record))
             else:
                 for object_tag in object_tags:
-                    results.append(transform_fn(object_record, object_tag))
+                    results.append(memo.memoize(object_record, object_tag))
         return results
 
     @staticmethod
