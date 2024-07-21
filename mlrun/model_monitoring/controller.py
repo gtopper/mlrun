@@ -395,6 +395,17 @@ class MonitoringApplicationController:
                         f"{endpoint[mm_constants.EventFieldType.UID]} is router skipping"
                     )
                     continue
+                logger.info(
+                    f"111 pool.submit(\n"
+                    f"  {MonitoringApplicationController.model_endpoint_process},\n"
+                    f"  endpoint={endpoint},\n"
+                    f"  applications_names={applications_names},\n"
+                    f"  batch_window_generator={self._batch_window_generator},\n"
+                    f"  project={self.project},\n"
+                    f"  parquet_directory={self.parquet_directory},\n"
+                    f"  storage_options={self.storage_options},\n"
+                    f"  model_monitoring_access_key={self.model_monitoring_access_key},\n"
+                )
                 future = pool.submit(
                     MonitoringApplicationController.model_endpoint_process,
                     endpoint=endpoint,
