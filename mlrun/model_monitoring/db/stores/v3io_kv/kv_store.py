@@ -103,7 +103,12 @@ class KVStoreBase(StoreBase):
         # Initialize a V3IO client instance
         self.client = mlrun.utils.v3io_clients.get_v3io_client(
             endpoint=mlrun.mlconf.v3io_api,
+            # logger_verbosity="DEBUG",
+            # transport_verbosity="DEBUG",
         )
+        # logger.info(
+        #     "111 setting KVStoreBase.client with logger_verbosity and transport_verbosity set to DEBUG"
+        # )
         # Get the KV table path and container
         self.path, self.container = self._get_path_and_container()
 
