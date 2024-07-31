@@ -83,3 +83,5 @@ RUN python -m pip install \
 
 COPY . .
 RUN python -m pip install .[complete]
+
+RUN pip uninstall -y v3io && pip install git+https://github.com/gtopper/v3io-py.git@ML-7160-debug
