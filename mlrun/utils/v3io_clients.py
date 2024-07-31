@@ -11,41 +11,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import threading
 
 from v3io.dataplane import Client as V3IOClient
 from v3io_frames import Client as get_client
 from v3io_frames.client import ClientBase
 
-_frames_thread_local_clients = threading.local()
-_v3io_thread_local_clients = threading.local()
+_v3io_clients: dict[frozenset, V3IOClient] = {}
+_frames_clients: dict[frozenset, ClientBase] = {}
 
 
 def get_frames_client(**kwargs) -> ClientBase:
-    global _frames_thread_local_clients
-
-    if not hasattr(_frames_thread_local_clients, "clients"):
-        _frames_thread_local_clients.clients = {}
-
-    clients = _frames_thread_local_clients.clients
-
+    global _frames_clients
     kw_set = frozenset(kwargs.items())
-    if kw_set not in clients:
-        clients[kw_set] = get_client(**kwargs)
+    if kw_set not in _frames_clients:
+        _frames_clients[kw_set] = get_client(**kwargs)
 
-    return clients[kw_set]
+    return _frames_clients[kw_set]
 
 
 def get_v3io_client(**kwargs) -> V3IOClient:
-    global _v3io_thread_local_clients
-
-    if not hasattr(_v3io_thread_local_clients, "clients"):
-        _v3io_thread_local_clients.clients = {}
-
-    clients = _v3io_thread_local_clients.clients
-
+    global _v3io_clients
     kw_set = frozenset(kwargs.items())
-    if kw_set not in clients:
-        clients[kw_set] = V3IOClient(**kwargs)
+    if kw_set not in _v3io_clients:
+        _v3io_clients[kw_set] = V3IOClient(**kwargs)
 
-    return clients[kw_set]
+    return _v3io_clients[kw_set]
