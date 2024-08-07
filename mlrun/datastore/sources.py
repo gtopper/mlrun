@@ -927,6 +927,8 @@ class OnlineSource(BaseSourceDriver):
     ]
     kind = ""
 
+    _default_nuclio_worker_timeout = "30s"
+
     def __init__(
         self,
         name: str = None,
@@ -986,6 +988,7 @@ class StreamSource(OnlineSource):
         shards=1,
         retention_in_hours=24,
         extra_attributes: dict = None,
+        worker_termination_timeout: Optional[str] = None,
         **kwargs,
     ):
         """
@@ -997,6 +1000,8 @@ class StreamSource(OnlineSource):
         :param shards: number of shards in the stream. Default 1
         :param retention_in_hours: if stream doesn't exist and it will be created set retention time. Default 24h
         :param extra_attributes: additional nuclio trigger attributes (key/value dict)
+        :param worker_termination_timeout: Optional, sets the nuclio worker termination timeout setting.
+          Defaults to 30s (30 seconds).
         """
         attrs = {
             "group": group,
@@ -1005,6 +1010,8 @@ class StreamSource(OnlineSource):
             "retention_in_hours": retention_in_hours,
             "extra_attributes": extra_attributes or {},
         }
+        if worker_termination_timeout:
+            attrs["worker_termination_timeout"] = worker_termination_timeout
         super().__init__(name, attributes=attrs, **kwargs)
 
     def add_nuclio_trigger(self, function):
@@ -1043,6 +1050,9 @@ class StreamSource(OnlineSource):
             self.attributes["seek_to"],
             self.attributes["shards"],
             extra_attributes=self.attributes.get("extra_attributes", {}),
+            worker_termination_timeout=self.attributes.pop(
+                "worker_termination_timeout", self._default_nuclio_worker_timeout
+            ),
             **kwargs,
         )
         return function
@@ -1061,6 +1071,7 @@ class KafkaSource(OnlineSource):
         sasl_user=None,
         sasl_pass=None,
         attributes=None,
+        worker_termination_timeout: Optional[str] = None,
         **kwargs,
     ):
         """Sets kafka source for the flow
@@ -1073,6 +1084,8 @@ class KafkaSource(OnlineSource):
         :param sasl_user: Optional, user name to use for sasl authentications
         :param sasl_pass: Optional, password to use for sasl authentications
         :param attributes: Optional, extra attributes to be passed to kafka trigger
+        :param worker_termination_timeout: Optional, sets the nuclio worker termination timeout setting.
+          Defaults to 30s (30 seconds).
         """
         if isinstance(topics, str):
             topics = [topics]
@@ -1092,6 +1105,8 @@ class KafkaSource(OnlineSource):
             sasl["password"] = sasl_pass
         if sasl:
             attributes["sasl"] = sasl
+        if worker_termination_timeout:
+            attributes["worker_termination_timeout"] = worker_termination_timeout
         super().__init__(attributes=attributes, **kwargs)
 
     def to_dataframe(
@@ -1138,6 +1153,9 @@ class KafkaSource(OnlineSource):
             initial_offset=extra_attributes.pop("initial_offset"),
             explicit_ack_mode=explicit_ack_mode,
             extra_attributes=extra_attributes,
+            worker_termination_timeout=extra_attributes.pop(
+                "worker_termination_timeout", self._default_nuclio_worker_timeout
+            ),
             **trigger_kwargs,
         )
         function = function.add_trigger("kafka", trigger)
