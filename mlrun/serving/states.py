@@ -1395,7 +1395,7 @@ class FlowStep(BaseStep):
         self.context.logger.info(
             f"111 FlowStep.supports_termination: self.engine={self.engine}"
         )
-        return self.engine == "async"
+        return self.engine != "sync"
 
 
 class RootFlowStep(FlowStep):
