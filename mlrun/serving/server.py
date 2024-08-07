@@ -348,9 +348,16 @@ def v2_serving_init(context, namespace=None):
 
 
 def _set_callbacks(server, context):
+    self.context.logger.info(
+        f'111 _set_callbacks: hasattr(context, "platform")={hasattr(context, "platform")}'
+    )
     if not server.graph.supports_termination() or not hasattr(context, "platform"):
         return
 
+    self.context.logger.info(
+        '111 _set_callbacks: hasattr(context.platform, "set_termination_callback")='
+        f'{hasattr(context.platform, "set_termination_callback")}'
+    )
     if hasattr(context.platform, "set_termination_callback"):
         context.logger.info(
             "Setting termination callback to terminate graph on worker shutdown"
@@ -363,6 +370,10 @@ def _set_callbacks(server, context):
 
         context.platform.set_termination_callback(termination_callback)
 
+    self.context.logger.info(
+        '111 _set_callbacks: hasattr(context.platform, "set_drain_callback")='
+        f'{hasattr(context.platform, "set_drain_callback")}'
+    )
     if hasattr(context.platform, "set_drain_callback"):
         context.logger.info(
             "Setting drain callback to terminate and restart the graph on a drain event (such as rebalancing)"

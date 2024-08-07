@@ -389,6 +389,7 @@ class BaseStep(ModelObj):
         raise NotImplementedError("set_flow() can only be called on a FlowStep")
 
     def supports_termination(self):
+        self.context.logger.info("111 BaseStep.supports_termination: returning False")
         return False
 
 
@@ -1391,6 +1392,9 @@ class FlowStep(BaseStep):
         return step
 
     def supports_termination(self):
+        self.context.logger.info(
+            f"111 FlowStep.supports_termination: self.engine={self.engine}"
+        )
         return self.engine == "async"
 
 
