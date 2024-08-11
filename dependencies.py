@@ -58,9 +58,6 @@ def extra_requirements() -> dict[str, list[str]]:
         "google-cloud": [
             "google-cloud-storage==2.14.0",
             "google-cloud-bigquery[pandas, bqstorage]==3.14.1",
-            # google-cloud-bigquery[bqstorage] requires google-cloud-bigquery-storage >= 2.6.0, but older (<2.17)
-            # versions of google-cloud-bigquery-storage runs into an issue
-            # (https://github.com/pypa/setuptools/issues/4476) with setuptools (ML-7273)
             "google-cloud-bigquery-storage~=2.17",
             "google-cloud==0.34",
         ],
