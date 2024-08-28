@@ -929,11 +929,14 @@ class UpdateEndpoint(mlrun.feature_store.steps.MapClass):
         # Remove labels from the event
         event.pop(EventFieldType.LABELS)
 
+        logger.info("Updating endpoint", event=event)
         update_endpoint_record(
             project=self.project,
             endpoint_id=event.pop(EventFieldType.ENDPOINT_ID),
             attributes=event,
         )
+        logger.info("Done updating endpoint")
+
         return event
 
 

@@ -62,6 +62,7 @@ class SQLStoreBase(StoreBase):
 
         self._sql_connection_string = kwargs.get("store_connection_string")
         self._engine = get_engine(dsn=self._sql_connection_string)
+        self._sql_session = create_session(dsn=self._sql_connection_string)
         self._init_tables()
 
     def create_tables(self):
@@ -135,12 +136,11 @@ class SQLStoreBase(StoreBase):
         :param table:       SQLAlchemy declarative table.
         :param criteria:    A list of binary expressions that filter the query.
         """
-        with create_session(dsn=self._sql_connection_string) as session:
-            # Generate and commit the update session query
-            session.query(
-                table  # pyright: ignore[reportOptionalCall]
-            ).filter(*criteria).update(attributes, synchronize_session=False)
-            session.commit()
+        # Generate and commit the update query
+        self._sql_session.query(
+            table  # pyright: ignore[reportOptionalCall]
+        ).filter(*criteria).update(attributes, synchronize_session=False)
+        self._sql_session.commit()
 
     def _get(
         self,
@@ -153,18 +153,17 @@ class SQLStoreBase(StoreBase):
         param table:     SQLAlchemy declarative table.
         :param criteria: A list of binary expressions that filter the query.
         """
-        with create_session(dsn=self._sql_connection_string) as session:
-            logger.debug(
-                "Querying the DB",
-                table=table.__name__,
-                criteria=[str(criterion) for criterion in criteria],
-            )
-            # Generate the get query
-            return (
-                session.query(table)  # pyright: ignore[reportOptionalCall]
-                .filter(*criteria)
-                .one_or_none()
-            )
+        logger.debug(
+            "Querying the DB",
+            table=table.__name__,
+            criteria=[str(criterion) for criterion in criteria],
+        )
+        # Generate the get query
+        return (
+            self._sql_session.query(table)  # pyright: ignore[reportOptionalCall]
+            .filter(*criteria)
+            .one_or_none()
+        )
 
     def _delete(
         self,
@@ -182,12 +181,11 @@ class SQLStoreBase(StoreBase):
                 f"Table {table.__tablename__} does not exist in the database. Skipping deletion."
             )
             return
-        with create_session(dsn=self._sql_connection_string) as session:
-            # Generate and commit the delete query
-            session.query(
-                table  # pyright: ignore[reportOptionalCall]
-            ).filter(*criteria).delete(synchronize_session=False)
-            session.commit()
+        # Generate and commit the delete query
+        self._sql_session.query(
+            table  # pyright: ignore[reportOptionalCall]
+        ).filter(*criteria).delete(synchronize_session=False)
+        self._sql_session.commit()
 
     def write_model_endpoint(self, endpoint: dict[str, typing.Any]):
         """
@@ -279,66 +277,67 @@ class SQLStoreBase(StoreBase):
         model_endpoints_table = (
             self.model_endpoints_table.__table__  # pyright: ignore[reportAttributeAccessIssue]
         )
+
         # Get the model endpoints records using sqlalchemy ORM
-        with create_session(dsn=self._sql_connection_string) as session:
-            # Generate the list query
-            query = session.query(self.model_endpoints_table).filter_by(
-                project=self.project
+
+        # Generate the list query
+        query = self._sql_session.query(self.model_endpoints_table).filter_by(
+            project=self.project
+        )
+
+        # Apply filters
+        if model:
+            model = model if ":" in model else f"{model}:latest"
+            query = self._filter_values(
+                query=query,
+                model_endpoints_table=model_endpoints_table,
+                key_filter=mm_schemas.EventFieldType.MODEL,
+                filtered_values=[model],
             )
+        if function:
+            function_uri = f"{self.project}/{function}"
+            query = self._filter_values(
+                query=query,
+                model_endpoints_table=model_endpoints_table,
+                key_filter=mm_schemas.EventFieldType.FUNCTION_URI,
+                filtered_values=[function_uri],
+            )
+        if uids:
+            query = self._filter_values(
+                query=query,
+                model_endpoints_table=model_endpoints_table,
+                key_filter=mm_schemas.EventFieldType.UID,
+                filtered_values=uids,
+                combined=False,
+            )
+        if top_level:
+            node_ep = str(mm_schemas.EndpointType.NODE_EP.value)
+            router_ep = str(mm_schemas.EndpointType.ROUTER.value)
+            endpoint_types = [node_ep, router_ep]
+            query = self._filter_values(
+                query=query,
+                model_endpoints_table=model_endpoints_table,
+                key_filter=mm_schemas.EventFieldType.ENDPOINT_TYPE,
+                filtered_values=endpoint_types,
+                combined=False,
+            )
+        # Convert the results from the DB into a ModelEndpoint object and append it to the model endpoints list
+        for endpoint_record in query.all():
+            endpoint_dict = endpoint_record.to_dict()
 
-            # Apply filters
-            if model:
-                model = model if ":" in model else f"{model}:latest"
-                query = self._filter_values(
-                    query=query,
-                    model_endpoints_table=model_endpoints_table,
-                    key_filter=mm_schemas.EventFieldType.MODEL,
-                    filtered_values=[model],
-                )
-            if function:
-                function_uri = f"{self.project}/{function}"
-                query = self._filter_values(
-                    query=query,
-                    model_endpoints_table=model_endpoints_table,
-                    key_filter=mm_schemas.EventFieldType.FUNCTION_URI,
-                    filtered_values=[function_uri],
-                )
-            if uids:
-                query = self._filter_values(
-                    query=query,
-                    model_endpoints_table=model_endpoints_table,
-                    key_filter=mm_schemas.EventFieldType.UID,
-                    filtered_values=uids,
-                    combined=False,
-                )
-            if top_level:
-                node_ep = str(mm_schemas.EndpointType.NODE_EP.value)
-                router_ep = str(mm_schemas.EndpointType.ROUTER.value)
-                endpoint_types = [node_ep, router_ep]
-                query = self._filter_values(
-                    query=query,
-                    model_endpoints_table=model_endpoints_table,
-                    key_filter=mm_schemas.EventFieldType.ENDPOINT_TYPE,
-                    filtered_values=endpoint_types,
-                    combined=False,
-                )
-            # Convert the results from the DB into a ModelEndpoint object and append it to the model endpoints list
-            for endpoint_record in query.all():
-                endpoint_dict = endpoint_record.to_dict()
+            # Filter labels
+            if labels and not self._validate_labels(
+                endpoint_dict=endpoint_dict, labels=labels
+            ):
+                continue
 
-                # Filter labels
-                if labels and not self._validate_labels(
-                    endpoint_dict=endpoint_dict, labels=labels
-                ):
-                    continue
+            if not include_stats:
+                # Exclude these fields when listing model endpoints to avoid returning too much data (ML-6594)
+                # TODO: Remove stats from table schema (ML-7196)
+                endpoint_dict.pop(mm_schemas.EventFieldType.FEATURE_STATS)
+                endpoint_dict.pop(mm_schemas.EventFieldType.CURRENT_STATS)
 
-                if not include_stats:
-                    # Exclude these fields when listing model endpoints to avoid returning too much data (ML-6594)
-                    # TODO: Remove stats from table schema (ML-7196)
-                    endpoint_dict.pop(mm_schemas.EventFieldType.FEATURE_STATS)
-                    endpoint_dict.pop(mm_schemas.EventFieldType.CURRENT_STATS)
-
-                endpoint_list.append(endpoint_dict)
+            endpoint_list.append(endpoint_dict)
 
         return endpoint_list
 
@@ -612,12 +611,11 @@ class SQLStoreBase(StoreBase):
 
         # Note: the block below does not use self._get, as we need here all the
         # results, not only `one_or_none`.
-        with sqlalchemy.orm.Session(self._engine) as session:
-            metric_rows = (
-                session.query(table)  # pyright: ignore[reportOptionalCall]
-                .filter(table.endpoint_id == endpoint_id)
-                .all()
-            )
+        metric_rows = (
+            self._sql_session.query(table)  # pyright: ignore[reportOptionalCall]
+            .filter(table.endpoint_id == endpoint_id)
+            .all()
+        )
 
         return [
             mm_schemas.ModelEndpointMonitoringMetric(
