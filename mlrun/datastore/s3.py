@@ -36,6 +36,7 @@ class S3Store(DataStore):
 
         access_key_id = self._get_secret_or_env("AWS_ACCESS_KEY_ID")
         secret_key = self._get_secret_or_env("AWS_SECRET_ACCESS_KEY")
+        token_file = self._get_secret_or_env("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE")
         endpoint_url = self._get_secret_or_env("S3_ENDPOINT_URL")
         force_non_anonymous = self._get_secret_or_env("S3_NON_ANONYMOUS")
         profile_name = self._get_secret_or_env("AWS_PROFILE")
@@ -89,7 +90,7 @@ class S3Store(DataStore):
                 aws_secret_access_key=secret_key,
                 endpoint_url=endpoint_url,
             )
-        else:
+        elif not token_file:
             # from env variables
             self.s3 = boto3.resource(
                 "s3", region_name=region, endpoint_url=endpoint_url
@@ -149,9 +150,7 @@ class S3Store(DataStore):
             token = None
 
         storage_options = dict(
-            anon=not (
-                force_non_anonymous or (access_key_id and secret) or token_file
-            ),
+            anon=not (force_non_anonymous or (access_key_id and secret) or token_file),
             key=access_key_id,
             secret=secret,
             token=token,
