@@ -139,6 +139,7 @@ class S3Store(DataStore):
         endpoint_url = self._get_secret_or_env("S3_ENDPOINT_URL")
         access_key_id = self._get_secret_or_env("AWS_ACCESS_KEY_ID")
         secret = self._get_secret_or_env("AWS_SECRET_ACCESS_KEY")
+        token_file = self._get_secret_or_env("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE")
 
         if self._temp_credentials:
             access_key_id = self._temp_credentials["AccessKeyId"]
@@ -148,7 +149,9 @@ class S3Store(DataStore):
             token = None
 
         storage_options = dict(
-            anon=not (force_non_anonymous or (access_key_id and secret)),
+            anon=not (
+                force_non_anonymous or (access_key_id and secret) or token_file
+            ),
             key=access_key_id,
             secret=secret,
             token=token,

@@ -1598,7 +1598,7 @@ def to_parquet(df, *args, **kwargs):
     if "version" not in kwargs:
         kwargs["version"] = "2.4"
     try:
-        print(f"df.to_parquet(*{args}, **{kwargs})")
+        print(f"111 df.to_parquet(*{args}, **{kwargs})")
         print(
             "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE="
             + os.getenv("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE", "")
