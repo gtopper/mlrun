@@ -644,6 +644,21 @@ class MLClientCtx:
 
         :returns: Artifact object
         """
+        print(
+            f"111 log_artifact(item={item}, "
+            f"body={body}, "
+            f"local_path={local_path}, "
+            f"artifact_path={artifact_path}, "
+            f"tag={tag}, "
+            f"viewer={viewer}, "
+            f"target_path={target_path}, "
+            f"src_path={src_path}, "
+            f"upload={upload}, "
+            f"labels={labels}, "
+            f"format={format}, "
+            f"db_key={db_key}, "
+            f"**{kwargs})"
+        )
         local_path = src_path or local_path
         item = self._artifacts_manager.log_artifact(
             self,
