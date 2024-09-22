@@ -589,6 +589,12 @@ class BaseStoreTarget(DataTargetBase):
             else:
                 storage_options = storage_options or self.storage_options
 
+            print(f"111 storage_options={storage_options}")
+            print(
+                "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE="
+                + os.getenv("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE", "")
+            )
+
             self._write_dataframe(
                 target_df,
                 storage_options,
