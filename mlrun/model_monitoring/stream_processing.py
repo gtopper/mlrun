@@ -803,7 +803,7 @@ class MapFeatureNames(mlrun.feature_store.steps.MapClass):
                 )
 
                 if endpoint_record.get(EventFieldType.ENDPOINT_TYPE) != str(
-                    EndpointType.ROUTER
+                    EndpointType.ROUTER.value
                 ):
                     update_monitoring_feature_set(
                         endpoint_record=endpoint_record,
