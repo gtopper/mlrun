@@ -86,6 +86,7 @@ def generate_target_run_id():
 
 
 def write_spark_dataframe_with_options(spark_options, df, mode, write_format=None):
+    print(f"111 spark_options={spark_options}")
     non_hadoop_spark_options = spark_session_update_hadoop_options(
         df.sql_ctx.sparkSession, spark_options
     )
