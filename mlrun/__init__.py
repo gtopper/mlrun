@@ -26,10 +26,13 @@ __all__ = [
     "VolumeMount",
 ]
 
+import traceback
 from os import environ, path
 from typing import Optional
 
 import dotenv
+
+traceback.print_stack()
 
 from .config import config as mlconf
 from .datastore import DataItem, store_manager
