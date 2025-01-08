@@ -146,7 +146,7 @@ class TDEngineConnector(TSDBConnector):
         create_table_sql = table._create_subtable_sql(subtable=table_name, values=event)
 
         # we need the string values to be sent to the connection, not the enum
-        columns = {key: val.value for key, val in table.columns.items()}
+        columns = {key: str(val) for key, val in table.columns.items()}
 
         insert_statement = Statement(
             columns=columns,
