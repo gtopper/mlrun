@@ -149,7 +149,7 @@ class TDEngineConnector(TSDBConnector):
         columns = {key: str(val) for key, val in table.columns.items()}
 
         for key, value in event.items():
-            logger.info(f"111 Event field – {key}: {value}")
+            logger.info(f"111 Event field – {key} ({type(key)}): {value} ({type(value)})")
 
         insert_statement = Statement(
             columns=columns,
