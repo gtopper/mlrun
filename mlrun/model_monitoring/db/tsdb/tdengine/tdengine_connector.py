@@ -148,6 +148,9 @@ class TDEngineConnector(TSDBConnector):
         # we need the string values to be sent to the connection, not the enum
         columns = {key: str(val) for key, val in table.columns.items()}
 
+        for key, value in event.items():
+            logger.info(f"111 Event field – {key}: {value}")
+
         insert_statement = Statement(
             columns=columns,
             subtable=table_name,
