@@ -109,7 +109,7 @@ class MLRunPatcher:
         built_images = self._tag_images_for_multi_node_registries(
             target_to_built_images.values()
         )
-        self._push_docker_images(built_images)
+        # self._push_docker_images(built_images)
 
         # Connect to the first node and start deployment patching process
         node = self._cluster_data_nodes[0]
@@ -217,7 +217,7 @@ class MLRunPatcher:
         }
         cmd = ["make"]
         cmd.extend(targets)
-        self._exec_local(cmd, live=True, env=env)
+        # self._exec_local(cmd, live=True, env=env)
 
         return {
             target: f"{mlrun_docker_registry}/{Constants.targets_to_image_name[target]}:{image_tag}"

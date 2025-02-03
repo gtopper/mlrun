@@ -6,6 +6,8 @@
     <option name="PARENT_ENVS" value="true" />
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
+      <env name="DOCKER_REGISTRY" value="docker.io/galtopper719" />
+      <env name="DOCKER_REPO" value="mlrun-api" />
     </envs>
     <option name="SDK_HOME" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
@@ -24,7 +26,7 @@
       </ENTRIES>
     </EXTENSION>
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/automation/patch_igz/patch_remote.py" />
-    <option name="PARAMETERS" value="-v" />
+    <option name="PARAMETERS" value="-v --tag 1.8.0-rc29-94e703" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

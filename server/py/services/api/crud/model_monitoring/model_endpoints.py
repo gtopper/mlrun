@@ -58,11 +58,13 @@ ARCHIVE_LIMITATION = 5
 
 
 def timeit(f, name, **kwargs):
-    start = time.monotonic()
-    res = f(**kwargs)
-    end = time.monotonic()
-    print(f"111 {name} took {end - start} seconds")
-    return res
+    def wrap():
+        start = time.monotonic()
+        res = f(**kwargs)
+        end = time.monotonic()
+        print(f"111 {name} took {end - start} seconds")
+        return res
+    return wrap
 
 
 class ModelEndpoints:
