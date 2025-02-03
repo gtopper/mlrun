@@ -539,7 +539,7 @@ class V3IOTSDBConnector(TSDBConnector):
         aggregators = ",".join(agg_funcs) if agg_funcs else None
         table_path = self.tables[table]
         print(
-            f"111 frames_client.read(backend={_TSDB_BE}, table={table_path}, start={start}, end={end}, "
+            f"111 _get_records: frames_client.read(backend={_TSDB_BE}, table={table_path}, start={start}, end={end}, "
             f"columns={columns}, filter={filter_query}, aggregation_window={interval}, aggregators={aggregators}, "
             f"step={sliding_window_step}, **kwargs={kwargs}"
         )
@@ -565,6 +565,7 @@ class V3IOTSDBConnector(TSDBConnector):
         end_time = time.monotonic()
 
         print(f"111 _get_records took {end_time - start_time} seconds")
+        print(f"111 _get_records: len(df)={len(df)}")
 
         return df
 
