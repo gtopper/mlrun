@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import time
 from datetime import datetime, timedelta, timezone
 from io import StringIO
 from typing import Literal, Optional, Union
@@ -520,6 +520,15 @@ class V3IOTSDBConnector(TSDBConnector):
         :return: DataFrame with the provided attributes from the data collection.
         :raise:  MLRunNotFoundError if the provided table wasn't found.
         """
+
+        print(
+            f"111 _get_records(self={self}, table={table}, start={start}, end={end}, columns={columns},"
+            f" filter_query={filter_query}, interval={interval}, agg_funcs={agg_funcs},"
+            f"sliding_window_step={sliding_window_step}, **kwargs={kwargs}"
+        )
+
+        start_time = time.monotonic()
+
         if table not in self.tables:
             raise mlrun.errors.MLRunNotFoundError(
                 f"Table '{table}' does not exist in the tables list of the TSDB connector. "
@@ -547,6 +556,10 @@ class V3IOTSDBConnector(TSDBConnector):
                 return pd.DataFrame()
             else:
                 raise err
+
+        end_time = time.monotonic()
+
+        print(f"111 _get_records took {end_time - start_time} seconds")
 
         return df
 
