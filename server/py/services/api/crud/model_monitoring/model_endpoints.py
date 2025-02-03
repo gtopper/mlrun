@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import itertools
+import time
 import typing
 import uuid
 from datetime import datetime
@@ -54,6 +55,14 @@ import services.api.crud.secrets
 
 DEFAULT_FUNCTION_TAG = "latest"
 ARCHIVE_LIMITATION = 5
+
+
+def timeit(f, name, **kwargs):
+    start = time.monotonic()
+    res = f(**kwargs)
+    end = time.monotonic()
+    print(f"111 {name} took {end - start} seconds")
+    return res
 
 
 class ModelEndpoints:
@@ -1327,17 +1336,40 @@ class ModelEndpoints:
 
         uids = [mep.metadata.uid for mep in model_endpoint_objects]
         tasks = [
-            run_in_threadpool(tsdb_connector.get_error_count, endpoint_ids=uids),
-            run_in_threadpool(tsdb_connector.get_last_request, endpoint_ids=uids),
-            run_in_threadpool(tsdb_connector.get_avg_latency, endpoint_ids=uids),
-            run_in_threadpool(tsdb_connector.get_drift_status, endpoint_ids=uids),
+            run_in_threadpool(
+                timeit(
+                    tsdb_connector.get_error_count, "get_error_count", endpoint_ids=uids
+                )
+            ),
+            run_in_threadpool(
+                timeit(
+                    tsdb_connector.get_last_request,
+                    "get_last_request",
+                    endpoint_ids=uids,
+                )
+            ),
+            run_in_threadpool(
+                timeit(
+                    tsdb_connector.get_avg_latency, "get_avg_latency", endpoint_ids=uids
+                )
+            ),
+            run_in_threadpool(
+                timeit(
+                    tsdb_connector.get_drift_status,
+                    "get_drift_status",
+                    endpoint_ids=uids,
+                )
+            ),
         ]
+        start_gather = time.monotonic()
         (
             error_count_df,
             last_request_df,
             avg_latency_df,
             drift_status_df,
         ) = await asyncio.gather(*tasks)
+        end_gather = time.monotonic()
+        print(f"111 asyncio.gather took {end_gather-start_gather} seconds")
         return list(
             map(
                 lambda mep: _add_metric(
