@@ -538,6 +538,11 @@ class V3IOTSDBConnector(TSDBConnector):
         # Frames client expects the aggregators to be a comma-separated string
         aggregators = ",".join(agg_funcs) if agg_funcs else None
         table_path = self.tables[table]
+        print(
+            f"111 frames_client.read(backend={_TSDB_BE}, table={table_path}, start={start}, end={end}, "
+            f"columns={columns}, filter={filter_query}, aggregation_window={interval}, aggregators={aggregators}, "
+            f"step={sliding_window_step}, **kwargs={kwargs}"
+        )
         try:
             df = self.frames_client.read(
                 backend=_TSDB_BE,
@@ -928,7 +933,9 @@ class V3IOTSDBConnector(TSDBConnector):
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
     ) -> pd.DataFrame:
-        print(f"111 get_avg_latency(endpoint_ids={endpoint_ids}, start={start}, end={end})")
+        print(
+            f"111 get_avg_latency(endpoint_ids={endpoint_ids}, start={start}, end={end})"
+        )
         filter_query = self._get_endpoint_filter(endpoint_id=endpoint_ids)
         start = start or (mlrun.utils.datetime_now() - timedelta(hours=24))
         start, end = self._get_start_end(start, end)
