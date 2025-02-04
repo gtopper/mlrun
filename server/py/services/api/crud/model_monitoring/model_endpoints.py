@@ -22,7 +22,6 @@ from typing import Callable, Optional
 import pandas as pd
 import sqlalchemy.orm
 from fastapi.concurrency import run_in_threadpool
-from sqlalchemy.util import asyncio
 
 import mlrun.artifacts
 import mlrun.common.helpers
@@ -1306,21 +1305,21 @@ class ModelEndpoints:
         :return: A list of `ModelEndpointMonitoringMetric` objects.
         """
 
-        def _add_metric(
-            mep: mlrun.common.schemas.ModelEndpoint,
+        def _add_metrics(
+            mep_by_uid: dict[str, mlrun.common.schemas.ModelEndpoint],
             df_dictionary: dict[str, pd.DataFrame],
         ):
             for metric in df_dictionary.keys():
                 df = df_dictionary.get(metric, pd.DataFrame())
-                if not df.empty:
-                    line = df[df["endpoint_id"] == mep.metadata.uid]
-                    if not line.empty and metric in line:
-                        value = line[metric].item()
+                for _, row in df.iterrows():
+                    mep = mep_by_uid.get(row["endpoint_id"])
+                    if mep and metric in row:
+                        value = row[metric]
                         if isinstance(value, pd.Timestamp):
                             value = value.to_pydatetime()
                         setattr(mep.status, metric, value)
 
-            return mep
+            return list(mep_by_uid.values())
 
         try:
             tsdb_connector = mlrun.model_monitoring.get_tsdb_connector(
@@ -1339,24 +1338,24 @@ class ModelEndpoints:
 
         uids = [mep.metadata.uid for mep in model_endpoint_objects]
         tasks = [
-            run_in_threadpool(
+            await run_in_threadpool(
                 timeit(
                     tsdb_connector.get_error_count, "get_error_count", endpoint_ids=uids
                 )
             ),
-            run_in_threadpool(
+            await run_in_threadpool(
                 timeit(
                     tsdb_connector.get_last_request,
                     "get_last_request",
                     endpoint_ids=uids,
                 )
             ),
-            run_in_threadpool(
+            await run_in_threadpool(
                 timeit(
                     tsdb_connector.get_avg_latency, "get_avg_latency", endpoint_ids=uids
                 )
             ),
-            run_in_threadpool(
+            await run_in_threadpool(
                 timeit(
                     tsdb_connector.get_drift_status,
                     "get_drift_status",
@@ -1370,23 +1369,31 @@ class ModelEndpoints:
             last_request_df,
             avg_latency_df,
             drift_status_df,
-        ) = await asyncio.gather(*tasks)
+        ) = tasks  # await asyncio.gather(*tasks)
+
+        model_endpoint_objects_by_uid = {}
+        for model_endpoint_object in model_endpoint_objects:
+            model_endpoint_objects_by_uid[model_endpoint_object.metadata.uid] = (
+                model_endpoint_object
+            )
+
         end_gather = time.monotonic()
         print(f"111 asyncio.gather took {end_gather-start_gather} seconds")
-        return list(
-            map(
-                lambda mep: _add_metric(
-                    mep=mep,
-                    df_dictionary={
-                        "error_count": error_count_df,
-                        "last_request": last_request_df,
-                        "avg_latency": avg_latency_df,
-                        "result_status": drift_status_df,
-                    },
-                ),
-                model_endpoint_objects,
-            )
+        start_add_metrics_loop = time.monotonic()
+        res = _add_metrics(
+            mep_by_uid=model_endpoint_objects_by_uid,
+            df_dictionary={
+                "error_count": error_count_df,
+                "last_request": last_request_df,
+                "avg_latency": avg_latency_df,
+                "result_status": drift_status_df,
+            },
         )
+        end_add_metrics_loop = time.monotonic()
+        print(
+            f"111 _add_metrics loop took {end_add_metrics_loop-start_add_metrics_loop} seconds"
+        )
+        return res
 
     @classmethod
     def _add_feature_stats(
