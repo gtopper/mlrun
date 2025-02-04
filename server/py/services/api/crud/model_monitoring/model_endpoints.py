@@ -1305,18 +1305,19 @@ class ModelEndpoints:
         :return: A list of `ModelEndpointMonitoringMetric` objects.
         """
 
-        def _add_metrics(
+        def _add_metrics_raw(
             mep_by_uid: dict[str, mlrun.common.schemas.ModelEndpoint],
-            df_dictionary: dict[str, pd.DataFrame],
+            metric: str,
+            column_name: str,
+            frames: list,
         ):
-            for metric in df_dictionary.keys():
-                df = df_dictionary.get(metric, pd.DataFrame())
-                for _, row in df.iterrows():
-                    mep = mep_by_uid.get(row["endpoint_id"])
-                    if mep and metric in row:
-                        value = row[metric]
-                        if isinstance(value, pd.Timestamp):
-                            value = value.to_pydatetime()
+            for frame in frames:
+                endpoint_ids = frame.column_data("endpoint_id")
+                metric_data = frame.column_data(column_name)
+                for index, endpoint_id in enumerate(endpoint_ids):
+                    mep = mep_by_uid.get(endpoint_id)
+                    value = metric_data[index]
+                    if mep and value:
                         setattr(mep.status, metric, value)
 
             return list(mep_by_uid.values())
@@ -1336,40 +1337,45 @@ class ModelEndpoints:
             )
             return model_endpoint_objects
 
-        uids = [mep.metadata.uid for mep in model_endpoint_objects]
-        tasks = [
-            await run_in_threadpool(
-                timeit(
-                    tsdb_connector.get_error_count, "get_error_count", endpoint_ids=uids
-                )
-            ),
-            await run_in_threadpool(
-                timeit(
-                    tsdb_connector.get_last_request,
-                    "get_last_request",
-                    endpoint_ids=uids,
-                )
-            ),
-            await run_in_threadpool(
-                timeit(
-                    tsdb_connector.get_avg_latency, "get_avg_latency", endpoint_ids=uids
-                )
-            ),
-            await run_in_threadpool(
-                timeit(
-                    tsdb_connector.get_drift_status,
-                    "get_drift_status",
-                    endpoint_ids=uids,
-                )
-            ),
-        ]
-        start_gather = time.monotonic()
-        (
-            error_count_df,
-            last_request_df,
-            avg_latency_df,
-            drift_status_df,
-        ) = tasks  # await asyncio.gather(*tasks)
+        uids = []
+        model_endpoint_objects_by_uid = {}
+        for model_endpoint_object in model_endpoint_objects:
+            uid = model_endpoint_object.metadata.uid
+            uids.append(uid)
+            model_endpoint_objects_by_uid[uid] = model_endpoint_object
+
+        start = time.monotonic()
+        error_count_res = await run_in_threadpool(
+            tsdb_connector.get_error_count,
+            endpoint_ids=uids,
+            get_raw=True,
+        )
+        end = time.monotonic()
+        print(f"111 get_error_count took {end - start} seconds")
+        start = time.monotonic()
+        last_request_res = await run_in_threadpool(
+            tsdb_connector.get_last_request,
+            endpoint_ids=uids,
+            get_raw=True,
+        )
+        end = time.monotonic()
+        print(f"111 get_last_request took {end - start} seconds")
+        start = time.monotonic()
+        avg_latency_res = await run_in_threadpool(
+            tsdb_connector.get_avg_latency,
+            endpoint_ids=uids,
+            get_raw=True,
+        )
+        end = time.monotonic()
+        print(f"111 get_avg_latency took {end - start} seconds")
+        start = time.monotonic()
+        drift_status_res = await run_in_threadpool(
+            tsdb_connector.get_drift_status,
+            endpoint_ids=uids,
+            get_raw=True,
+        )
+        end = time.monotonic()
+        print(f"111 get_drift_status took {end - start} seconds")
 
         model_endpoint_objects_by_uid = {}
         for model_endpoint_object in model_endpoint_objects:
@@ -1377,23 +1383,36 @@ class ModelEndpoints:
                 model_endpoint_object
             )
 
-        end_gather = time.monotonic()
-        print(f"111 asyncio.gather took {end_gather-start_gather} seconds")
-        start_add_metrics_loop = time.monotonic()
-        res = _add_metrics(
-            mep_by_uid=model_endpoint_objects_by_uid,
-            df_dictionary={
-                "error_count": error_count_df,
-                "last_request": last_request_df,
-                "avg_latency": avg_latency_df,
-                "result_status": drift_status_df,
-            },
+        start_add_metrics_calls = time.monotonic()
+        _add_metrics_raw(
+            model_endpoint_objects_by_uid,
+            "error_count",
+            "count(error_count)",
+            error_count_res,
         )
-        end_add_metrics_loop = time.monotonic()
+        _add_metrics_raw(
+            model_endpoint_objects_by_uid,
+            "last_request",
+            "last(last_request_timestamp)",
+            last_request_res,
+        )
+        _add_metrics_raw(
+            model_endpoint_objects_by_uid,
+            "avg_latency",
+            "max(result_status)",
+            drift_status_res,
+        )
+        _add_metrics_raw(
+            model_endpoint_objects_by_uid,
+            "result_status",
+            "avg(latency)",
+            avg_latency_res,
+        )
+        end_add_metrics_calls = time.monotonic()
         print(
-            f"111 _add_metrics loop took {end_add_metrics_loop-start_add_metrics_loop} seconds"
+            f"111 _add_metrics calls took {end_add_metrics_calls-start_add_metrics_calls} seconds"
         )
-        return res
+        return list(model_endpoint_objects_by_uid.values())
 
     @classmethod
     def _add_feature_stats(

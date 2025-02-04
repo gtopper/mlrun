@@ -491,6 +491,7 @@ class V3IOTSDBConnector(TSDBConnector):
         interval: Optional[str] = None,
         agg_funcs: Optional[list[str]] = None,
         sliding_window_step: Optional[str] = None,
+        get_raw: bool = False,
         **kwargs,
     ) -> pd.DataFrame:
         """
@@ -524,7 +525,7 @@ class V3IOTSDBConnector(TSDBConnector):
         print(
             f"111 _get_records(self={self}, table={table}, start={start}, end={end}, columns={columns},"
             f" filter_query={filter_query}, interval={interval}, agg_funcs={agg_funcs},"
-            f"sliding_window_step={sliding_window_step}, **kwargs={kwargs}"
+            f"sliding_window_step={sliding_window_step}, get_raw={get_raw}, **kwargs={kwargs}"
         )
 
         start_time = time.monotonic()
@@ -541,10 +542,10 @@ class V3IOTSDBConnector(TSDBConnector):
         print(
             f"111 _get_records: frames_client.read(backend={_TSDB_BE}, table={table_path}, start={start}, end={end}, "
             f"columns={columns}, filter={filter_query}, aggregation_window={interval}, aggregators={aggregators}, "
-            f"step={sliding_window_step}, **kwargs={kwargs}"
+            f"step={sliding_window_step}, get_raw={get_raw}, **kwargs={kwargs}"
         )
         try:
-            df = self.frames_client.read(
+            res = self.frames_client.read(
                 backend=_TSDB_BE,
                 table=table_path,
                 start=start,
@@ -554,20 +555,21 @@ class V3IOTSDBConnector(TSDBConnector):
                 aggregation_window=interval,
                 aggregators=aggregators,
                 step=sliding_window_step,
+                get_raw=get_raw,
                 **kwargs,
             )
+            if get_raw:
+                res = list(res)
         except v3io_frames.Error as err:
             if _is_no_schema_error(err):
-                return pd.DataFrame()
+                return [] if get_raw else pd.DataFrame()
             else:
                 raise err
 
         end_time = time.monotonic()
-
         print(f"111 _get_records took {end_time - start_time} seconds")
-        print(f"111 _get_records: len(df)={len(df)}")
 
-        return df
+        return res
 
     def _get_v3io_source_directory(self) -> str:
         """
@@ -797,16 +799,23 @@ class V3IOTSDBConnector(TSDBConnector):
         endpoint_ids: Union[str, list[str]],
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
+        get_raw: bool = False,
     ) -> pd.DataFrame:
         filter_query = self._get_endpoint_filter(endpoint_id=endpoint_ids)
         start, end = self._get_start_end(start, end)
-        df = self._get_records(
+        res = self._get_records(
             table=mm_schemas.V3IOTSDBTables.PREDICTIONS,
             start=start,
             end=end,
             filter_query=filter_query,
             agg_funcs=["last"],
+            get_raw=get_raw,
         )
+
+        if get_raw:
+            return res
+
+        df = res
         if not df.empty:
             df.rename(
                 columns={
@@ -830,11 +839,12 @@ class V3IOTSDBConnector(TSDBConnector):
         endpoint_ids: Union[str, list[str]],
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
+        get_raw: bool = False,
     ) -> pd.DataFrame:
         filter_query = self._get_endpoint_filter(endpoint_id=endpoint_ids)
         start = start or (mlrun.utils.datetime_now() - timedelta(hours=24))
         start, end = self._get_start_end(start, end)
-        df = self._get_records(
+        res = self._get_records(
             table=mm_schemas.V3IOTSDBTables.APP_RESULTS,
             start=start,
             end=end,
@@ -842,7 +852,12 @@ class V3IOTSDBConnector(TSDBConnector):
             filter_query=filter_query,
             agg_funcs=["max"],
             group_by="endpoint_id",
+            get_raw=get_raw,
         )
+        if get_raw:
+            return res
+
+        df = res
         if not df.empty:
             df.columns = [
                 col[len("max(") : -1] if "max(" in col else col for col in df.columns
@@ -903,6 +918,7 @@ class V3IOTSDBConnector(TSDBConnector):
         endpoint_ids: Union[str, list[str]],
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
+        get_raw: bool = False,
     ) -> pd.DataFrame:
         filter_query = self._get_endpoint_filter(endpoint_id=endpoint_ids)
         if filter_query:
@@ -910,14 +926,20 @@ class V3IOTSDBConnector(TSDBConnector):
         else:
             filter_query = f"{mm_schemas.EventFieldType.ERROR_TYPE} == '{mm_schemas.EventFieldType.INFER_ERROR}' z"
         start, end = self._get_start_end(start, end)
-        df = self._get_records(
+        res = self._get_records(
             table=mm_schemas.FileTargetKind.ERRORS,
             start=start,
             end=end,
             columns=[mm_schemas.EventFieldType.ERROR_COUNT],
             filter_query=filter_query,
             agg_funcs=["count"],
+            get_raw=get_raw,
         )
+
+        if get_raw:
+            return res
+
+        df = res
         if not df.empty:
             df.rename(
                 columns={
@@ -933,21 +955,25 @@ class V3IOTSDBConnector(TSDBConnector):
         endpoint_ids: Union[str, list[str]],
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
+        get_raw: bool = False,
     ) -> pd.DataFrame:
-        print(
-            f"111 get_avg_latency(endpoint_ids={endpoint_ids}, start={start}, end={end})"
-        )
         filter_query = self._get_endpoint_filter(endpoint_id=endpoint_ids)
         start = start or (mlrun.utils.datetime_now() - timedelta(hours=24))
         start, end = self._get_start_end(start, end)
-        df = self._get_records(
+        res = self._get_records(
             table=mm_schemas.V3IOTSDBTables.PREDICTIONS,
             start=start,
             end=end,
             columns=[mm_schemas.EventFieldType.LATENCY],
             filter_query=filter_query,
             agg_funcs=["avg"],
+            get_raw=get_raw,
         )
+
+        if get_raw:
+            return res
+
+        df = res
         if not df.empty:
             df.dropna(inplace=True)
             df.rename(

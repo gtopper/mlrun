@@ -533,6 +533,7 @@ class TDEngineConnector(TSDBConnector):
         endpoint_ids: typing.Union[str, list[str]],
         start: typing.Optional[datetime] = None,
         end: typing.Optional[datetime] = None,
+        get_raw: bool = False,
     ) -> pd.DataFrame:
         filter_query = self._get_endpoint_filter(endpoint_id=endpoint_ids)
         start, end = self._get_start_end(start, end)
@@ -573,6 +574,7 @@ class TDEngineConnector(TSDBConnector):
         endpoint_ids: typing.Union[str, list[str]],
         start: typing.Optional[datetime] = None,
         end: typing.Optional[datetime] = None,
+        get_raw: bool = False,
     ) -> pd.DataFrame:
         filter_query = self._get_endpoint_filter(endpoint_id=endpoint_ids)
         start = start or (mlrun.utils.datetime_now() - timedelta(hours=24))
@@ -682,6 +684,7 @@ class TDEngineConnector(TSDBConnector):
         endpoint_ids: typing.Union[str, list[str]],
         start: typing.Optional[datetime] = None,
         end: typing.Optional[datetime] = None,
+        get_raw: bool = False,
     ) -> pd.DataFrame:
         filter_query = self._get_endpoint_filter(endpoint_id=endpoint_ids)
         filter_query += f"AND {mm_schemas.EventFieldType.ERROR_TYPE} = '{mm_schemas.EventFieldType.INFER_ERROR}'"
@@ -712,6 +715,7 @@ class TDEngineConnector(TSDBConnector):
         endpoint_ids: typing.Union[str, list[str]],
         start: typing.Optional[datetime] = None,
         end: typing.Optional[datetime] = None,
+        get_raw: bool = False,
     ) -> pd.DataFrame:
         endpoint_ids = (
             endpoint_ids if isinstance(endpoint_ids, list) else [endpoint_ids]
