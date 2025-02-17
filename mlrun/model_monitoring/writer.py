@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import json
+import time
 from datetime import datetime, timezone
 from typing import Any, Callable, NewType, Optional
 
@@ -186,19 +187,30 @@ class ModelMonitoringWriter(StepToDict):
         )
 
     def do(self, event: _RawEvent) -> None:
+        start = time.monotonic()
+        t0 = time.monotonic()
         event, kind = self._reconstruct_event(event)
-        logger.info("Starting to write event", event=event)
+        t1 = time.monotonic()
+        logger.info(
+            "Starting to write event", event=event, reconstruct_event_time=t1 - t0
+        )
         if (
             kind == WriterEventKind.STATS
             and event[WriterEvent.APPLICATION_NAME]
             == HistogramDataDriftApplicationConstants.NAME
         ):
+            t0 = time.monotonic()
             self.write_stats(event)
-            logger.info("Model monitoring writer finished handling event")
+            t1 = time.monotonic()
+            logger.info(
+                "Model monitoring writer finished handling event",
+                write_stats_time=t1 - t0,
+            )
             return
+        t0 = time.monotonic()
         self._tsdb_connector.write_application_event(event=event.copy(), kind=kind)
-
-        logger.info("Completed event DB writes")
+        t1 = time.monotonic()
+        logger.info("Completed event DB writes", write_application_event=t1 - t0)
 
         if (
             mlrun.mlconf.alerts.mode == mlrun.common.schemas.alert.AlertsModes.enabled
@@ -216,6 +228,7 @@ class ModelMonitoringWriter(StepToDict):
                 "result_name": event[ResultData.RESULT_NAME],
                 "result_value": event[ResultData.RESULT_VALUE],
             }
+            t0 = time.monotonic()
             self._generate_event_on_drift(
                 entity_id=get_result_instance_fqn(
                     event[WriterEvent.ENDPOINT_ID],
@@ -227,5 +240,11 @@ class ModelMonitoringWriter(StepToDict):
                 project_name=self.project,
                 result_kind=event[ResultData.RESULT_KIND],
             )
+            t1 = time.monotonic()
+            logger.info(f"generate_event_on_drift runtime: {t1-t0}")
 
-        logger.info("Model monitoring writer finished handling event")
+        end = time.monotonic()
+        logger.info(
+            "Model monitoring writer finished handling event",
+            writer_runtime=end - start,
+        )
