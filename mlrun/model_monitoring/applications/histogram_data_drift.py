@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import time
 from dataclasses import dataclass
 from typing import Final, Optional, Protocol, Union, cast
 
@@ -342,6 +342,8 @@ class HistogramDataDriftApplication(ModelMonitoringApplicationBase):
         """
         Calculate and return the data drift metrics, averaged over the features.
         """
+
+        t0 = time.monotonic()
         monitoring_context.logger.debug("Starting to run the application")
         if not monitoring_context.feature_stats:
             monitoring_context.logger.warning(
@@ -352,6 +354,8 @@ class HistogramDataDriftApplication(ModelMonitoringApplicationBase):
         metrics_per_feature = self._compute_metrics_per_feature(
             monitoring_context=monitoring_context
         )
+        t1 = time.monotonic()
+        print(f"111 _compute_metrics_per_feature() took {t1 - t0} seconds")
         monitoring_context.logger.debug("Saving artifacts")
         self._log_drift_artifacts(
             monitoring_context=monitoring_context,
@@ -359,18 +363,26 @@ class HistogramDataDriftApplication(ModelMonitoringApplicationBase):
         )
         monitoring_context.logger.debug("Computing average per metric")
         metrics = self._get_metrics(metrics_per_feature)
+        t2 = time.monotonic()
+        print(f"111 _get_metrics() took {t2 - t1} seconds")
         result = self._get_general_drift_result(
             metrics=metrics,
             monitoring_context=monitoring_context,
             metrics_per_feature=metrics_per_feature,
         )
+        t3 = time.monotonic()
+        print(f"111 _get_general_drift_result() took {t3 - t2} seconds")
         stats = self._get_stats(
             metrics=metrics,
             monitoring_context=monitoring_context,
             metrics_per_feature=metrics_per_feature,
         )
+        t4 = time.monotonic()
+        print(f"111 _get_stats() took {t4 - t3} seconds")
         metrics_result_and_stats = metrics + [result] + stats
         monitoring_context.logger.debug(
             "Finished running the application", results=metrics_result_and_stats
         )
+        t999 = time.monotonic()
+        print(f"111 do_tracking() took {t999-t0} seconds")
         return metrics_result_and_stats
