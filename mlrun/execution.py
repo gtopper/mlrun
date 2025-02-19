@@ -682,7 +682,9 @@ class MLClientCtx:
             **kwargs,
         )
         t1 = time.monotonic()
-        print(f"111 MLClientCtx.log_artifact(): _artifacts_manager.log_artifact() took {t1 - t0} seconds")
+        print(
+            f"111 MLClientCtx.log_artifact(): _artifacts_manager.log_artifact() took {t1 - t0} seconds"
+        )
         self._update_run()
         t2 = time.monotonic()
         print(f"111 MLClientCtx.log_artifact(): _update_run() took {t2 - t1} seconds")

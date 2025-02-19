@@ -176,7 +176,9 @@ class HistogramDataDriftApplication(ModelMonitoringApplicationBase):
                 for metric in self.metrics
             }
         t4 = time.monotonic()
-        print(f"111 _compute_metrics_per_feature: loop over feature_stats took {t4-t3:.2f}")
+        print(
+            f"111 _compute_metrics_per_feature: loop over feature_stats took {t4-t3:.2f}"
+        )
         monitoring_context.logger.info("Finished computing the metrics")
 
         return metrics_per_feature
@@ -326,11 +328,15 @@ class HistogramDataDriftApplication(ModelMonitoringApplicationBase):
             drift_results=drift_results,
         )
         t2 = time.monotonic()
-        print(f"111 _log_plotly_table_artifact: FeaturesDriftTablePlot.produce() took {t2 - t1:.2f} seconds")
+        print(
+            f"111 _log_plotly_table_artifact: FeaturesDriftTablePlot.produce() took {t2 - t1:.2f} seconds"
+        )
         # Takes 53% of _log_drift_artifacts run time
         monitoring_context.log_artifact(plot)
         t3 = time.monotonic()
-        print(f"111 _log_plotly_table_artifact: log_artifact() took {t3 - t2:.2f} seconds")
+        print(
+            f"111 _log_plotly_table_artifact: log_artifact() took {t3 - t2:.2f} seconds"
+        )
         monitoring_context.logger.debug("Logged plotly artifact successfully")
 
     # 60% of do_tracking
