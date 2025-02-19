@@ -14,6 +14,7 @@
 
 import logging
 import os
+import time
 import uuid
 import warnings
 from copy import deepcopy
@@ -664,6 +665,7 @@ class MLClientCtx:
         :returns: Artifact object
         """
         local_path = src_path or local_path
+        t0 = time.monotonic()
         item = self._artifacts_manager.log_artifact(
             self,
             item,
@@ -679,7 +681,11 @@ class MLClientCtx:
             format=format,
             **kwargs,
         )
+        t1 = time.monotonic()
+        print(f"111 MLClientCtx.log_artifact(): _artifacts_manager.log_artifact() took {t1 - t0} seconds")
         self._update_run()
+        t2 = time.monotonic()
+        print(f"111 MLClientCtx.log_artifact(): _update_run() took {t2 - t1} seconds")
         return item
 
     def log_dataset(

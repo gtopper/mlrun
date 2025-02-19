@@ -137,18 +137,31 @@ class HistogramDataDriftApplication(ModelMonitoringApplicationBase):
             self.metrics
         ), "TVD and Hellinger distance are required for the general data drift result"
 
+    # 40% of do_tracking
     def _compute_metrics_per_feature(
         self, monitoring_context: mm_context.MonitoringApplicationContext
     ) -> DataFrame:
         """Compute the metrics for the different features and labels"""
+        t0 = time.monotonic()
         metrics_per_feature = DataFrame(
             columns=[metric_class.NAME for metric_class in self.metrics]
         )
+        t1 = time.monotonic()
+        print(f"111 _compute_metrics_per_feature: DataFrame() took {t1 - t0:.2f}")
         feature_stats = monitoring_context.dict_to_histogram(
             monitoring_context.feature_stats
         )
+        t2 = time.monotonic()
+        print(
+            f"111 _compute_metrics_per_feature: dict_to_histogram(monitoring_context.feature_stats) took {t2 - t1:.2f}"
+        )
+        # This takes almost %100 of _compute_metrics_per_feature run time
         sample_df_stats = monitoring_context.dict_to_histogram(
             monitoring_context.sample_df_stats
+        )
+        t3 = time.monotonic()
+        print(
+            f"111 _compute_metrics_per_feature: dict_to_histogram(monitoring_context.sample_df_stats) took {t3 - t2:.2f}"
         )
         for feature_name in feature_stats:
             sample_hist = np.asarray(sample_df_stats[feature_name])
@@ -162,6 +175,8 @@ class HistogramDataDriftApplication(ModelMonitoringApplicationBase):
                 ).compute()
                 for metric in self.metrics
             }
+        t4 = time.monotonic()
+        print(f"111 _compute_metrics_per_feature: loop over feature_stats took {t4-t3:.2f}")
         monitoring_context.logger.info("Finished computing the metrics")
 
         return metrics_per_feature
@@ -291,21 +306,34 @@ class HistogramDataDriftApplication(ModelMonitoringApplicationBase):
         )
 
         monitoring_context.logger.debug("Computing drift results per feature")
+        t0 = time.monotonic()
+        # insignificant
         drift_results = {
             cast(str, key): (self._value_classifier.value_to_status(value), value)
             for key, value in drift_per_feature_values.items()
         }
-        monitoring_context.logger.debug("Logging plotly artifact")
-        monitoring_context.log_artifact(
-            mm_drift_table.FeaturesDriftTablePlot().produce(
-                sample_set_statistics=sample_set_statistics,
-                inputs_statistics=inputs_statistics,
-                metrics=metrics_per_feature.T.to_dict(),  # pyright: ignore[reportArgumentType]
-                drift_results=drift_results,
-            )
+        t1 = time.monotonic()
+        print(
+            f"111 _log_plotly_table_artifact: drift_results calc took {t1 - t0:.2f} seconds"
         )
+        monitoring_context.logger.debug("Logging plotly artifact")
+        # Takes 27% of _log_drift_artifacts run time
+        # Locally it's almost 100%!
+        plot = mm_drift_table.FeaturesDriftTablePlot().produce(
+            sample_set_statistics=sample_set_statistics,
+            inputs_statistics=inputs_statistics,
+            metrics=metrics_per_feature.T.to_dict(),  # pyright: ignore[reportArgumentType]
+            drift_results=drift_results,
+        )
+        t2 = time.monotonic()
+        print(f"111 _log_plotly_table_artifact: FeaturesDriftTablePlot.produce() took {t2 - t1:.2f} seconds")
+        # Takes 53% of _log_drift_artifacts run time
+        monitoring_context.log_artifact(plot)
+        t3 = time.monotonic()
+        print(f"111 _log_plotly_table_artifact: log_artifact() took {t3 - t2:.2f} seconds")
         monitoring_context.logger.debug("Logged plotly artifact successfully")
 
+    # 60% of do_tracking
     def _log_drift_artifacts(
         self,
         monitoring_context: mm_context.MonitoringApplicationContext,
@@ -313,13 +341,27 @@ class HistogramDataDriftApplication(ModelMonitoringApplicationBase):
         log_json_artifact: bool = True,
     ) -> None:
         """Log JSON and Plotly drift data per feature artifacts"""
+
+        t0 = time.monotonic()
         drift_per_feature_values = metrics_per_feature[
             [HellingerDistance.NAME, TotalVarianceDistance.NAME]
         ].mean(axis=1)
+        t1 = time.monotonic()
+        print(
+            f"111 _log_drift_artifacts: drift_per_feature_values calc took {t1 - t0:.2f} seconds"
+        )
 
         if log_json_artifact:
+            t11 = time.monotonic()
+            # Takes 20% of _log_drift_artifacts run time
             self._log_json_artifact(drift_per_feature_values, monitoring_context)
+            t12 = time.monotonic()
+            print(
+                f"111 _log_drift_artifacts: _log_json_artifact() took {t12 - t11:.2f} seconds"
+            )
 
+        t2 = time.monotonic()
+        # Takes 80% of _log_drift_artifacts run time
         self._log_plotly_table_artifact(
             sample_set_statistics=self._get_shared_features_sample_stats(
                 monitoring_context
@@ -328,6 +370,10 @@ class HistogramDataDriftApplication(ModelMonitoringApplicationBase):
             metrics_per_feature=metrics_per_feature,
             drift_per_feature_values=drift_per_feature_values,
             monitoring_context=monitoring_context,
+        )
+        t3 = time.monotonic()
+        print(
+            f"111 _log_drift_artifacts: _log_plotly_table_artifact() took {t3 - t2:.2f} seconds"
         )
 
     def do_tracking(
@@ -351,38 +397,42 @@ class HistogramDataDriftApplication(ModelMonitoringApplicationBase):
                 "In order to run the application, training set must be provided when logging the model."
             )
             return []
+        # 40% of do_tracking run time
         metrics_per_feature = self._compute_metrics_per_feature(
             monitoring_context=monitoring_context
         )
         t1 = time.monotonic()
-        print(f"111 _compute_metrics_per_feature() took {t1 - t0} seconds")
+        print(f"111 _compute_metrics_per_feature() took {t1 - t0:.2f} seconds")
         monitoring_context.logger.debug("Saving artifacts")
+        # 60% of do_tracking run time
         self._log_drift_artifacts(
             monitoring_context=monitoring_context,
             metrics_per_feature=metrics_per_feature,
         )
+        t11 = time.monotonic()
+        print(f"111 _log_drift_artifacts() took {t11 - t1:.2f} seconds")
         monitoring_context.logger.debug("Computing average per metric")
         metrics = self._get_metrics(metrics_per_feature)
         t2 = time.monotonic()
-        print(f"111 _get_metrics() took {t2 - t1} seconds")
+        print(f"111 _get_metrics() took {t2 - t11:.2f} seconds")
         result = self._get_general_drift_result(
             metrics=metrics,
             monitoring_context=monitoring_context,
             metrics_per_feature=metrics_per_feature,
         )
         t3 = time.monotonic()
-        print(f"111 _get_general_drift_result() took {t3 - t2} seconds")
+        print(f"111 _get_general_drift_result() took {t3 - t2:.2f} seconds")
         stats = self._get_stats(
             metrics=metrics,
             monitoring_context=monitoring_context,
             metrics_per_feature=metrics_per_feature,
         )
         t4 = time.monotonic()
-        print(f"111 _get_stats() took {t4 - t3} seconds")
+        print(f"111 _get_stats() took {t4 - t3:.2f} seconds")
         metrics_result_and_stats = metrics + [result] + stats
         monitoring_context.logger.debug(
             "Finished running the application", results=metrics_result_and_stats
         )
         t999 = time.monotonic()
-        print(f"111 do_tracking() took {t999-t0} seconds")
+        print(f"111 do_tracking() took {t999-t0:.2f} seconds")
         return metrics_result_and_stats
