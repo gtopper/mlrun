@@ -7514,7 +7514,8 @@ class SQLDB(DBInterface):
                 order_by=order_by,
             )
         ):
-            logger.info(f"Transforming model endpoint #{i}...")
+            if (i + 1) % 500 == 0:
+                logger.info(f"Transforming model endpoint #{i}...")
             model_endpoints.append(
                 self._transform_model_endpoint_model_to_schema(mep_record)
             )
