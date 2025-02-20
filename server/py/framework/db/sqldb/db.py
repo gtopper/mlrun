@@ -7478,6 +7478,22 @@ class SQLDB(DBInterface):
         order_by: typing.Optional[str] = None,
     ) -> mlrun.common.schemas.ModelEndpointList:
         model_endpoints: list[mlrun.common.schemas.ModelEndpoint] = []
+        logger.info(
+            "Finding model endpoints...",
+            names=names,
+            project=project,
+            labels=labels,
+            function_name=function_name,
+            function_tag=function_tag,
+            model_name=model_name,
+            model_tag=model_tag,
+            top_level=top_level,
+            uids=uids,
+            latest_only=latest_only,
+            offset=offset,
+            limit=limit,
+            order_by=order_by,
+        )
         for mep_record in self._find_model_endpoints(
             session=session,
             names=names,
@@ -7496,9 +7512,11 @@ class SQLDB(DBInterface):
             limit=limit,
             order_by=order_by,
         ):
+            logger.info("Transforming model endpoint...")
             model_endpoints.append(
                 self._transform_model_endpoint_model_to_schema(mep_record)
             )
+        logger.info("Returning found model endpoints...")
         return mlrun.common.schemas.ModelEndpointList(endpoints=model_endpoints)
 
     def delete_model_endpoint(
