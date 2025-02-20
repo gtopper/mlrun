@@ -7552,6 +7552,9 @@ class SQLDB(DBInterface):
                     cumulative_runtimes.get(segment, 0) + runtime
                 )
             model_endpoints.append(model_endpoint)
+
+            for segment in runtimes:
+                runtimes[segment] = f"{runtimes[segment]:.2f}"
         logger.info(
             f"Returning {len(model_endpoints)} model endpoints...",
             local_id=local_id,
