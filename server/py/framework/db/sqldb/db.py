@@ -21,6 +21,7 @@ import pathlib
 import re
 import typing
 import urllib.parse
+import uuid
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Union
@@ -7478,8 +7479,10 @@ class SQLDB(DBInterface):
         order_by: typing.Optional[str] = None,
     ) -> mlrun.common.schemas.ModelEndpointList:
         model_endpoints: list[mlrun.common.schemas.ModelEndpoint] = []
+        local_id = str(uuid.uuid4())
         logger.info(
             "Finding model endpoints...",
+            local_id=local_id,
             names=names,
             project=project,
             labels=labels,
@@ -7515,11 +7518,17 @@ class SQLDB(DBInterface):
             )
         ):
             if (i + 1) % 500 == 0:
-                logger.info(f"Transforming model endpoint #{i}...")
+                logger.info(
+                    f"Transforming model endpoint #{i+1}...",
+                    local_id=local_id,
+                )
             model_endpoints.append(
                 self._transform_model_endpoint_model_to_schema(mep_record)
             )
-        logger.info(f"Returning {len(model_endpoints)} model endpoints...")
+        logger.info(
+            f"Returning {len(model_endpoints)} model endpoints...",
+            local_id=local_id,
+        )
         return mlrun.common.schemas.ModelEndpointList(endpoints=model_endpoints)
 
     def delete_model_endpoint(
