@@ -7518,48 +7518,75 @@ class SQLDB(DBInterface):
             limit=limit,
             order_by=order_by,
         )
-        cumulative_runtimes = {}
-        for i, mep_record in enumerate(
-            self._find_model_endpoints(
-                session=session,
-                names=names,
-                project=project,
-                labels=labels,
-                function_name=function_name,
-                function_tag=function_tag,
-                model_name=model_name,
-                model_tag=model_tag,
-                top_level=top_level,
-                start=start,
-                end=end,
-                uids=uids,
-                latest_only=latest_only,
-                offset=offset,
-                limit=limit,
-                order_by=order_by,
-            )
-        ):
-            if (i + 1) % 500 == 0:
-                logger.info(
-                    f"Transforming model endpoint #{i+1}...",
-                    local_id=local_id,
-                )
-            model_endpoint, runtimes = self._transform_model_endpoint_model_to_schema(
-                mep_record
-            )
-            for segment, runtime in runtimes.items():
-                cumulative_runtimes[segment] = (
-                    cumulative_runtimes.get(segment, 0) + runtime
-                )
-            model_endpoints.append(model_endpoint)
-
-            for segment in runtimes:
-                runtimes[segment] = f"{runtimes[segment]:.2f}"
-        logger.info(
-            f"Returning {len(model_endpoints)} model endpoints...",
-            local_id=local_id,
-            runtimes=runtimes,
+        query = self._find_model_endpoints(
+            session=session,
+            names=names,
+            project=project,
+            labels=labels,
+            function_name=function_name,
+            function_tag=function_tag,
+            model_name=model_name,
+            model_tag=model_tag,
+            top_level=top_level,
+            start=start,
+            end=end,
+            uids=uids,
+            latest_only=latest_only,
+            offset=offset,
+            limit=limit,
+            order_by=order_by,
         )
+        t0 = time.monotonic()
+        res = list(query)
+        t1 = time.monotonic()
+        # cumulative_runtimes = {}
+        # for i, mep_record in enumerate(
+        #     self._find_model_endpoints(
+        #         session=session,
+        #         names=names,
+        #         project=project,
+        #         labels=labels,
+        #         function_name=function_name,
+        #         function_tag=function_tag,
+        #         model_name=model_name,
+        #         model_tag=model_tag,
+        #         top_level=top_level,
+        #         start=start,
+        #         end=end,
+        #         uids=uids,
+        #         latest_only=latest_only,
+        #         offset=offset,
+        #         limit=limit,
+        #         order_by=order_by,
+        #     )
+        # ):
+        #     if (i + 1) % 500 == 0:
+        #         logger.info(
+        #             f"Transforming model endpoint #{i+1}...",
+        #             local_id=local_id,
+        #         )
+        #     model_endpoint, runtimes = self._transform_model_endpoint_model_to_schema(
+        #         mep_record
+        #     )
+        #     for segment, runtime in runtimes.items():
+        #         cumulative_runtimes[segment] = (
+        #             cumulative_runtimes.get(segment, 0) + runtime
+        #         )
+        #     model_endpoints.append(model_endpoint)
+        #
+        #     for segment in runtimes:
+        #         runtimes[segment] = f"{runtimes[segment]:.2f}"
+        # logger.info(
+        #     f"Returning {len(model_endpoints)} model endpoints...",
+        #     local_id=local_id,
+        #     runtimes=runtimes,
+        # )
+        logger.info(
+            "Returning an empty list of model endpoints...",
+            query_result_size=len(res),
+            query_time=f"{t1-t0:.2f}",
+        )
+        model_endpoints = []
         return mlrun.common.schemas.ModelEndpointList(endpoints=model_endpoints)
 
     def delete_model_endpoint(
