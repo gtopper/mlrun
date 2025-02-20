@@ -19,6 +19,7 @@ import hashlib
 import inspect
 import pathlib
 import re
+import time
 import typing
 import urllib.parse
 import uuid
@@ -5642,34 +5643,54 @@ class SQLDB(DBInterface):
         model_endpoint_record: ModelEndpoint,
         format_: mlrun.common.formatters.ModelEndpointFormat = mlrun.common.formatters.ModelEndpointFormat.full,
     ) -> mlrun.common.schemas.ModelEndpoint:
+        runtimes = {}
+
+        t0 = time.monotonic()
         model_endpoint_full_dict = model_endpoint_record.struct
+        t1 = time.monotonic()
+        runtimes["t1"] = t1 - t0
         model_endpoint_full_dict[ModelEndpointSchema.UPDATED] = (
             model_endpoint_record.updated
         )
+        t2 = time.monotonic()
+        runtimes["t2"] = t2 - t1
         model_endpoint_full_dict[ModelEndpointSchema.CREATED] = (
             model_endpoint_record.created
         )
+        t3 = time.monotonic()
+        runtimes["t3"] = t3 - t2
         model_endpoint_full_dict[ModelEndpointSchema.UID] = model_endpoint_record.uid
+        t4 = time.monotonic()
+        runtimes["t4"] = t4 - t3
         model_endpoint_full_dict[ModelEndpointSchema.FUNCTION_TAG] = (
             model_endpoint_record.function_tag
         )
+        t5 = time.monotonic()
+        runtimes["t5"] = t5 - t4
         model_endpoint_full_dict = self._fill_model_endpoint_with_function_data(
             model_endpoint_record, model_endpoint_full_dict
         )
+        t6 = time.monotonic()
+        runtimes["t6"] = t6 - t5
         model_endpoint_full_dict = self._fill_model_endpoint_with_model_data(
             model_endpoint_record, model_endpoint_full_dict
         )
-
+        t7 = time.monotonic()
+        runtimes["t7"] = t7 - t6
         model_endpoint_full_dict = (
             mlrun.common.formatters.ModelEndpointFormat.format_obj(
                 model_endpoint_full_dict, format_
             )
         )
+        t8 = time.monotonic()
+        runtimes["t8"] = t8 - t7
         model_endpoint_resp = mlrun.common.schemas.ModelEndpoint.from_flat_dict(
             model_endpoint_full_dict
         )
+        t9 = time.monotonic()
+        runtimes["t9"] = t9 - t8
 
-        return model_endpoint_resp
+        return model_endpoint_resp, runtimes
 
     @staticmethod
     def _fill_model_endpoint_with_function_data(
@@ -7497,6 +7518,7 @@ class SQLDB(DBInterface):
             limit=limit,
             order_by=order_by,
         )
+        cumulative_runtimes = {}
         for i, mep_record in enumerate(
             self._find_model_endpoints(
                 session=session,
@@ -7522,12 +7544,18 @@ class SQLDB(DBInterface):
                     f"Transforming model endpoint #{i+1}...",
                     local_id=local_id,
                 )
-            model_endpoints.append(
-                self._transform_model_endpoint_model_to_schema(mep_record)
+            model_endpoint, runtimes = self._transform_model_endpoint_model_to_schema(
+                mep_record
             )
+            for segment, runtime in runtimes.items():
+                cumulative_runtimes[segment] = (
+                    cumulative_runtimes.get(segment, 0) + runtime
+                )
+            model_endpoints.append(model_endpoint)
         logger.info(
             f"Returning {len(model_endpoints)} model endpoints...",
             local_id=local_id,
+            runtimes=runtimes,
         )
         return mlrun.common.schemas.ModelEndpointList(endpoints=model_endpoints)
 
