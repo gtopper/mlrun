@@ -5671,7 +5671,7 @@ class SQLDB(DBInterface):
         #     model_endpoint_record, model_endpoint_full_dict
         # )
         # runtimes.update(r1)
-        # t6 = time.monotonic()
+        t6 = time.monotonic()
         # runtimes["t6"] = t6 - t5
         model_endpoint_full_dict = self._fill_model_endpoint_with_model_data(
             model_endpoint_record, model_endpoint_full_dict
