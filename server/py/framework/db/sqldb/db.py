@@ -5689,6 +5689,7 @@ class SQLDB(DBInterface):
         )
         t9 = time.monotonic()
         runtimes["t9"] = t9 - t8
+        runtimes["inside_transform"] = t9 - t0
 
         return model_endpoint_resp, runtimes
 
@@ -7554,6 +7555,7 @@ class SQLDB(DBInterface):
             cumulative_runtimes["transform"] = cumulative_runtimes.get(
                 "transform", 0
             ) + (end_transform - start_transform)
+            runtimes["outside_transform"] = end_transform - start_transform
             for segment, runtime in runtimes.items():
                 cumulative_runtimes[segment] = (
                     cumulative_runtimes.get(segment, 0) + runtime
