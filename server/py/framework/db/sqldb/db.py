@@ -7551,7 +7551,7 @@ class SQLDB(DBInterface):
                 mep_record
             )
             end_transform = time.monotonic()
-            runtimes["transform"] = end_transform - start_transform
+            runtimes["transform"] = cumulative_runtimes.get("transform", 0) + (end_transform - start_transform)
             for segment, runtime in runtimes.items():
                 cumulative_runtimes[segment] = (
                     cumulative_runtimes.get(segment, 0) + runtime
