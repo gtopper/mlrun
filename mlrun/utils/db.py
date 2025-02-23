@@ -49,7 +49,7 @@ class BaseModel:
 class HasStruct(BaseModel):
     @property
     def struct(self):
-        print(f"{self.__class__.__name__}: loading pickle of size {len(self.body)}")
+        # print(f"{self.__class__.__name__}: loading pickle of size {len(self.body)}")
         return pickle.loads(self.body)
 
     @struct.setter
