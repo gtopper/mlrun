@@ -5667,9 +5667,10 @@ class SQLDB(DBInterface):
         )
         t5 = time.monotonic()
         runtimes["t5"] = t5 - t4
-        model_endpoint_full_dict = self._fill_model_endpoint_with_function_data(
+        model_endpoint_full_dict, r1 = self._fill_model_endpoint_with_function_data(
             model_endpoint_record, model_endpoint_full_dict
         )
+        runtimes.update(r1)
         t6 = time.monotonic()
         runtimes["t6"] = t6 - t5
         model_endpoint_full_dict = self._fill_model_endpoint_with_model_data(
@@ -5694,13 +5695,20 @@ class SQLDB(DBInterface):
 
     @staticmethod
     def _fill_model_endpoint_with_function_data(
-        model_endpoint_record: ModelEndpoint, model_endpoint_full_dict: dict
-    ) -> dict:
+        model_endpoint_record: ModelEndpoint,
+        model_endpoint_full_dict: dict,
+    ) -> (dict, dict):
+        runtimes = {}
         if model_endpoint_record.function:
+            t60 = time.monotonic()
             function_full_dict = model_endpoint_record.function.struct
+            t61 = time.monotonic()
+            runtimes["t61"] = t61 - t60
             model_endpoint_full_dict[ModelEndpointSchema.STATE] = (
                 function_full_dict.get("status", {}).get(ModelEndpointSchema.STATE)
             )
+            t62 = time.monotonic()
+            runtimes["t62"] = t62 - t61
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_TAG.FUNCTION_URI] = (
                 generate_object_uri(
                     project=model_endpoint_record.project,
@@ -5708,7 +5716,9 @@ class SQLDB(DBInterface):
                     hash_key=function_full_dict.get("metadata", {}).get("hash"),
                 )
             )
-        return model_endpoint_full_dict
+            t63 = time.monotonic()
+            runtimes["t63"] = t63 - t62
+        return model_endpoint_full_dict, runtimes
 
     @staticmethod
     def _fill_model_endpoint_with_model_data(
