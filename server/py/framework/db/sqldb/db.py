@@ -5642,7 +5642,7 @@ class SQLDB(DBInterface):
         self,
         model_endpoint_record: ModelEndpoint,
         format_: mlrun.common.formatters.ModelEndpointFormat = mlrun.common.formatters.ModelEndpointFormat.full,
-    ) -> mlrun.common.schemas.ModelEndpoint:
+    ) -> (mlrun.common.schemas.ModelEndpoint, dict):
         runtimes = {}
 
         t0 = time.monotonic()
@@ -7551,7 +7551,9 @@ class SQLDB(DBInterface):
                 mep_record
             )
             end_transform = time.monotonic()
-            runtimes["transform"] = cumulative_runtimes.get("transform", 0) + (end_transform - start_transform)
+            cumulative_runtimes["transform"] = cumulative_runtimes.get(
+                "transform", 0
+            ) + (end_transform - start_transform)
             for segment, runtime in runtimes.items():
                 cumulative_runtimes[segment] = (
                     cumulative_runtimes.get(segment, 0) + runtime
@@ -7559,11 +7561,11 @@ class SQLDB(DBInterface):
             model_endpoints.append(model_endpoint)
 
             for segment in runtimes:
-                runtimes[segment] = f"{runtimes[segment]:.2f}"
+                cumulative_runtimes[segment] = f"{runtimes[segment]:.2f}"
         logger.info(
             f"Returning {len(model_endpoints)} model endpoints...",
             local_id=local_id,
-            runtimes=runtimes,
+            runtimes=cumulative_runtimes,
         )
         logger.info(
             "Returning an empty list of model endpoints...",
