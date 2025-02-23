@@ -5667,12 +5667,12 @@ class SQLDB(DBInterface):
         )
         t5 = time.monotonic()
         runtimes["t5"] = t5 - t4
-        model_endpoint_full_dict, r1 = self._fill_model_endpoint_with_function_data(
-            model_endpoint_record, model_endpoint_full_dict
-        )
-        runtimes.update(r1)
-        t6 = time.monotonic()
-        runtimes["t6"] = t6 - t5
+        # model_endpoint_full_dict, r1 = self._fill_model_endpoint_with_function_data(
+        #     model_endpoint_record, model_endpoint_full_dict
+        # )
+        # runtimes.update(r1)
+        # t6 = time.monotonic()
+        # runtimes["t6"] = t6 - t5
         model_endpoint_full_dict = self._fill_model_endpoint_with_model_data(
             model_endpoint_record, model_endpoint_full_dict
         )
@@ -5725,20 +5725,15 @@ class SQLDB(DBInterface):
         model_endpoint_record: ModelEndpoint, model_endpoint_full_dict: dict
     ) -> dict:
         if model_endpoint_record.model:
+            model_object = model_endpoint_record.model.full_object
             model_artifact_uri = mlrun.datastore.get_store_uri(
                 kind=mlrun.utils.helpers.StorePrefix.Model,
                 uri=generate_artifact_uri(
                     project=model_endpoint_record.project,
                     key=model_endpoint_record.model.key,
-                    iter=model_endpoint_record.model.full_object.get(
-                        "metadata", {}
-                    ).get("iter"),
-                    tree=model_endpoint_record.model.full_object.get(
-                        "metadata", {}
-                    ).get("tree"),
-                    uid=model_endpoint_record.model.full_object.get("metadata", {}).get(
-                        "uid"
-                    ),
+                    iter=model_object.get("metadata", {}).get("iter"),
+                    tree=model_object.get("metadata", {}).get("tree"),
+                    uid=model_object.get("metadata", {}).get("uid"),
                 ),
             )
 
