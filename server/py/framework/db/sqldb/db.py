@@ -46,7 +46,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.inspection import inspect as sqlalchemy_inspect
-from sqlalchemy.orm import Session, aliased, selectinload
+from sqlalchemy.orm import Session, aliased, selectinload, joinedload
 from sqlalchemy.orm.attributes import flag_modified
 
 import mlrun
