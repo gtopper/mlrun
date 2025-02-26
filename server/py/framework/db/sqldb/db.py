@@ -5706,7 +5706,7 @@ class SQLDB(DBInterface):
         t9 = time.monotonic()
         runtimes["t9"] = t9 - t8
 
-        return model_endpoint_resp
+        return model_endpoint_resp, runtimes
 
     @staticmethod
     def _fill_model_endpoint_with_model_data(
