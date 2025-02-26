@@ -5712,19 +5712,30 @@ class SQLDB(DBInterface):
     def _fill_model_endpoint_with_model_data(
         model_endpoint_record: ModelEndpoint, model_endpoint_full_dict: dict
     ) -> dict:
-        if model_endpoint_record.model:
+        runtimes = {}
+
+        t70 = time.monotonic()
+        model = model_endpoint_record.model
+        t71 = time.monotonic()
+        runtimes["t71"] = t71 - t70
+        if model:
             model_artifact_uri = mlrun.datastore.get_store_uri(
                 kind=mlrun.utils.helpers.StorePrefix.Model,
                 uri=generate_artifact_uri(
                     project=model_endpoint_record.project,
-                    key=model_endpoint_record.model.key,
-                    iter=model_endpoint_record.model.iteration,
-                    tree=model_endpoint_record.model.producer_id,
-                    uid=model_endpoint_record.model.uid,
+                    key=model.key,
+                    iter=model.iteration,
+                    tree=model.producer_id,
+                    uid=model.uid,
                 ),
             )
+            t72 = time.monotonic()
+            runtimes["t72"] = t72 - t71
 
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_URI] = model_artifact_uri
+
+            t73 = time.monotonic()
+            runtimes["t73"] = t73 - t72
         return model_endpoint_full_dict
 
     @staticmethod
@@ -5732,11 +5743,15 @@ class SQLDB(DBInterface):
         model_endpoint_record: ModelEndpoint,
         model_endpoint_full_dict: dict,
         latest: bool,
-    ) -> dict:
+    ) -> (dict, dict):
+        runtimes = {}
         if model_endpoint_record.function and latest:
+            t0 = time.monotonic()
             model_endpoint_full_dict[ModelEndpointSchema.STATE] = (
                 model_endpoint_record.function.state
             )
+            t1 = time.monotonic()
+            runtimes["t1"] = t1 - t0
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_TAG.FUNCTION_URI] = (
                 generate_object_uri(
                     project=model_endpoint_record.project,
@@ -5744,6 +5759,8 @@ class SQLDB(DBInterface):
                     hash_key=model_endpoint_record.function.uid,
                 )
             )
+            t2 = time.monotonic()
+            runtimes["t2"] = t2 - t1
         else:
             model_endpoint_full_dict[ModelEndpointSchema.STATE] = "unknown"
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_TAG.FUNCTION_URI] = None
