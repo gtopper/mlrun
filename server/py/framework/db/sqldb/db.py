@@ -5766,7 +5766,7 @@ class SQLDB(DBInterface):
         else:
             model_endpoint_full_dict[ModelEndpointSchema.STATE] = "unknown"
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_TAG.FUNCTION_URI] = None
-        return model_endpoint_full_dict
+        return model_endpoint_full_dict, runtimes
 
     def _transform_project_record_to_schema(
         self, session: Session, project_record: Project
