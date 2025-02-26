@@ -46,7 +46,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.inspection import inspect as sqlalchemy_inspect
-from sqlalchemy.orm import Session, aliased
+from sqlalchemy.orm import Session, aliased, selectinload
 from sqlalchemy.orm.attributes import flag_modified
 
 import mlrun
@@ -5397,7 +5397,9 @@ class SQLDB(DBInterface):
         :param offset: SQL query offset.
         :param limit: SQL query limit.
         """
-        query = session.query(ModelEndpoint)
+        query = session.query(ModelEndpoint).options(
+            selectinload(Function.child_relationship)
+        )
         query = query.filter(ModelEndpoint.project == project)
 
         model_endpoints_table = (
