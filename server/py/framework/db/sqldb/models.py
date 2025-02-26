@@ -916,13 +916,30 @@ with warnings.catch_warnings():
 
     class ModelEndpoint(Base, mlrun.utils.db.HasStruct):
         __tablename__ = "model_endpoints"
+        __table_args__ = (
+            UniqueConstraint(
+                "project",
+                "name",
+                "uid",
+                "function_name",
+                "function_tag",
+                name="_mep_uc_2",
+            ),
+        )
 
         id = Column(Integer, primary_key=True)
         uid = Column(String(32), default=lambda: uuid.uuid4().hex, unique=True)
-        name = Column(String(255, collation=SQLTypesUtil.collation()))
         endpoint_type = Column(Integer, nullable=False)
         project = Column(String(255, collation=SQLTypesUtil.collation()))
+        function_name = Column(String(255, collation=SQLTypesUtil.collation()))
+        function_uid = Column(String(255, collation=SQLTypesUtil.collation()))
+        function_tag = Column(String(64, collation=SQLTypesUtil.collation()))
+        model_uid = Column(String(255, collation=SQLTypesUtil.collation()))
+        model_name = Column(String(255, collation=SQLTypesUtil.collation()))
+        model_tag = Column(String(64, collation=SQLTypesUtil.collation()))
+        model_db_key = Column(String(255, collation=SQLTypesUtil.collation()))
         body = Column(SQLTypesUtil.blob())
+
         created = Column(
             SQLTypesUtil.timestamp(),
             default=lambda: datetime.now(timezone.utc),
@@ -931,19 +948,29 @@ with warnings.catch_warnings():
             SQLTypesUtil.timestamp(),
             default=lambda: datetime.now(timezone.utc),
         )
-        function_id = Column(
-            Integer,
-            ForeignKey("functions.id"),
-            nullable=True,
+        name = Column(String(255, collation=SQLTypesUtil.collation()))
+        function = relationship(
+            "Function",
+            cascade="save-update",
+            single_parent=True,
+            overlaps="model",
+            primaryjoin=and_(
+                foreign(function_name) == Function.name,
+                foreign(function_uid) == Function.uid,
+                foreign(project) == Function.project,
+            ),
         )
-        function = relationship(Function)
-
-        model_id = Column(
-            Integer,
-            ForeignKey("artifacts_v2.id"),
-            nullable=True,
+        model = relationship(
+            "ArtifactV2",
+            cascade="save-update",
+            single_parent=True,
+            overlaps="function",
+            primaryjoin=and_(
+                foreign(model_uid) == ArtifactV2.uid,
+                foreign(project) == ArtifactV2.project,
+                foreign(model_db_key) == ArtifactV2.key,
+            ),
         )
-        model = relationship(ArtifactV2)
 
         Label = make_label(__tablename__)
         Tag = make_tag_v2(__tablename__)  # for versioning (latest and empty tags only)
