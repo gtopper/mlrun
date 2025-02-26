@@ -5681,16 +5681,18 @@ class SQLDB(DBInterface):
         )
         t5 = time.monotonic()
         runtimes["t5"] = t5 - t4
-        model_endpoint_full_dict = self._fill_model_endpoint_with_function_data(
+        model_endpoint_full_dict, r1 = self._fill_model_endpoint_with_function_data(
             model_endpoint_record,
             model_endpoint_full_dict,
             latest=bool(model_endpoint_record.tags),
         )
+        runtimes.update(r1)
         t6 = time.monotonic()
         runtimes["t6"] = t6 - t5
-        model_endpoint_full_dict = self._fill_model_endpoint_with_model_data(
+        model_endpoint_full_dict, r2 = self._fill_model_endpoint_with_model_data(
             model_endpoint_record, model_endpoint_full_dict
         )
+        runtimes.update(r2)
         t7 = time.monotonic()
         runtimes["t7"] = t7 - t6
         model_endpoint_full_dict = (
@@ -5711,7 +5713,7 @@ class SQLDB(DBInterface):
     @staticmethod
     def _fill_model_endpoint_with_model_data(
         model_endpoint_record: ModelEndpoint, model_endpoint_full_dict: dict
-    ) -> dict:
+    ) -> (dict, dict):
         runtimes = {}
 
         t70 = time.monotonic()
@@ -5736,7 +5738,7 @@ class SQLDB(DBInterface):
 
             t73 = time.monotonic()
             runtimes["t73"] = t73 - t72
-        return model_endpoint_full_dict
+        return model_endpoint_full_dict, runtimes
 
     @staticmethod
     def _fill_model_endpoint_with_function_data(
