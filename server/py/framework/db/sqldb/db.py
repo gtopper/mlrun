@@ -5681,14 +5681,17 @@ class SQLDB(DBInterface):
         )
         t5 = time.monotonic()
         runtimes["t5"] = t5 - t4
+        latest = bool(model_endpoint_record.tags)
+        t60 = time.monotonic()
+        runtimes["t60"] = t60 - t5
         model_endpoint_full_dict, r1 = self._fill_model_endpoint_with_function_data(
             model_endpoint_record,
             model_endpoint_full_dict,
-            latest=bool(model_endpoint_record.tags),
+            latest=latest,
         )
         runtimes.update(r1)
         t6 = time.monotonic()
-        runtimes["t6"] = t6 - t5
+        runtimes["t6"] = t6 - t60
         model_endpoint_full_dict, r2 = self._fill_model_endpoint_with_model_data(
             model_endpoint_record, model_endpoint_full_dict
         )
