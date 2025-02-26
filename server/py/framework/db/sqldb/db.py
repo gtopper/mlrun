@@ -5398,9 +5398,9 @@ class SQLDB(DBInterface):
         :param limit: SQL query limit.
         """
         query = session.query(ModelEndpoint).options(
-            selectinload(ModelEndpoint.function),
-            selectinload(ModelEndpoint.model),
-            selectinload(ModelEndpoint.tags),
+            joinedload(ModelEndpoint.function),
+            joinedload(ModelEndpoint.model),
+            joinedload(ModelEndpoint.tags),
         )
         query = query.filter(ModelEndpoint.project == project)
 
