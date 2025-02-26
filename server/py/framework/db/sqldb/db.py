@@ -5753,7 +5753,7 @@ class SQLDB(DBInterface):
                 model_endpoint_record.function.state
             )
             t1 = time.monotonic()
-            runtimes["t1"] = t1 - t0
+            runtimes["t61"] = t1 - t0
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_TAG.FUNCTION_URI] = (
                 generate_object_uri(
                     project=model_endpoint_record.project,
@@ -5762,7 +5762,7 @@ class SQLDB(DBInterface):
                 )
             )
             t2 = time.monotonic()
-            runtimes["t2"] = t2 - t1
+            runtimes["t62"] = t2 - t1
         else:
             model_endpoint_full_dict[ModelEndpointSchema.STATE] = "unknown"
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_TAG.FUNCTION_URI] = None
