@@ -5747,22 +5747,23 @@ class SQLDB(DBInterface):
         latest: bool,
     ) -> (dict, dict):
         runtimes = {}
-        if model_endpoint_record.function and latest:
-            t0 = time.monotonic()
-            model_endpoint_full_dict[ModelEndpointSchema.STATE] = (
-                model_endpoint_record.function.state
-            )
-            t1 = time.monotonic()
-            runtimes["t61"] = t1 - t0
+        t0 = time.monotonic()
+        function = model_endpoint_record.function
+        t1 = time.monotonic()
+        runtimes["t61"] = t1 - t0
+        if function and latest:
+            model_endpoint_full_dict[ModelEndpointSchema.STATE] = function.state
+            t2 = time.monotonic()
+            runtimes["t62"] = t2 - t1
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_TAG.FUNCTION_URI] = (
                 generate_object_uri(
                     project=model_endpoint_record.project,
                     name=model_endpoint_record.function_name,
-                    hash_key=model_endpoint_record.function.uid,
+                    hash_key=function.uid,
                 )
             )
-            t2 = time.monotonic()
-            runtimes["t62"] = t2 - t1
+            t3 = time.monotonic()
+            runtimes["t63"] = t3 - t2
         else:
             model_endpoint_full_dict[ModelEndpointSchema.STATE] = "unknown"
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_TAG.FUNCTION_URI] = None
