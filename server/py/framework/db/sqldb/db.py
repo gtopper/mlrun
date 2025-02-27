@@ -7707,9 +7707,7 @@ class SQLDB(DBInterface):
             limit=limit,
             order_by=order_by,
         )
-        t0 = time.monotonic()
         res = list(query)
-        t1 = time.monotonic()
         cumulative_runtimes = {}
         for i, mep_record in enumerate(res):
             if (i + 1) % 500 == 0:
