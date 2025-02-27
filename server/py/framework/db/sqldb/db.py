@@ -7738,11 +7738,6 @@ class SQLDB(DBInterface):
             local_id=local_id,
             runtimes=cumulative_runtimes,
         )
-        logger.info(
-            "Returning an empty list of model endpoints...",
-            query_result_size=len(res),
-            query_time=f"{t1 - t0:.2f}",
-        )
         return mlrun.common.schemas.ModelEndpointList(endpoints=model_endpoints)
 
     def delete_model_endpoint(
