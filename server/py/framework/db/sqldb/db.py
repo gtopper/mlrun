@@ -7740,7 +7740,7 @@ class SQLDB(DBInterface):
             endpoints=model_endpoints
         )
         logger.info(
-            f"Returning {len(model_endpoints)} model endpoints...",
+            f"Returning {len(endpoint_list.endpoints)} model endpoints...",
             local_id=local_id,
         )
         return endpoint_list
