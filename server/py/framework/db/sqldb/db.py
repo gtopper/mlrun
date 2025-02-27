@@ -19,6 +19,7 @@ import hashlib
 import inspect
 import pathlib
 import re
+import time
 import typing
 import urllib.parse
 from copy import deepcopy
@@ -5653,63 +5654,99 @@ class SQLDB(DBInterface):
         self,
         model_endpoint_record: ModelEndpoint,
         format_: mlrun.common.formatters.ModelEndpointFormat = mlrun.common.formatters.ModelEndpointFormat.full,
-    ) -> mlrun.common.schemas.ModelEndpoint:
+    ) -> (mlrun.common.schemas.ModelEndpoint, dict):
+        runtimes = {}
+
+        t0 = time.monotonic()
         model_endpoint_full_dict = model_endpoint_record.struct
+        t1 = time.monotonic()
+        runtimes["t1"] = t1 - t0
         model_endpoint_full_dict[ModelEndpointSchema.UPDATED] = (
             model_endpoint_record.updated
         )
+        t2 = time.monotonic()
+        runtimes["t2"] = t2 - t1
         model_endpoint_full_dict[ModelEndpointSchema.CREATED] = (
             model_endpoint_record.created
         )
+        t3 = time.monotonic()
+        runtimes["t3"] = t3 - t2
         model_endpoint_full_dict[ModelEndpointSchema.UID] = model_endpoint_record.uid
-        model_endpoint_full_dict = self._fill_model_endpoint_with_function_data(
+        t4 = time.monotonic()
+        runtimes["t4"] = t4 - t3
+        latest = bool(model_endpoint_record.tags)
+        t5 = time.monotonic()
+        runtimes["t5"] = t5 - t4
+        model_endpoint_full_dict, r1 = self._fill_model_endpoint_with_function_data(
             model_endpoint_record,
             model_endpoint_full_dict,
-            latest=bool(model_endpoint_record.tags),
+            latest=latest,
         )
-        model_endpoint_full_dict = self._fill_model_endpoint_with_model_data(
+        runtimes.update(r1)
+        t6 = time.monotonic()
+        runtimes["t6"] = t6 - t5
+        model_endpoint_full_dict, r2 = self._fill_model_endpoint_with_model_data(
             model_endpoint_record, model_endpoint_full_dict
         )
-
+        runtimes.update(r2)
+        t7 = time.monotonic()
+        runtimes["t7"] = t7 - t6
         model_endpoint_full_dict = (
             mlrun.common.formatters.ModelEndpointFormat.format_obj(
                 model_endpoint_full_dict, format_
             )
         )
-
+        t8 = time.monotonic()
+        runtimes["t8"] = t8 - t7
         model_endpoint_resp = mlrun.common.schemas.ModelEndpoint.from_flat_dict(
             model_endpoint_full_dict
         )
+        t9 = time.monotonic()
+        runtimes["t9"] = t9 - t8
+
         model_endpoint_full_dict["_model_id"] = None
-        return model_endpoint_resp
+        return model_endpoint_resp, runtimes
 
     def _fill_model_endpoint_with_function_data(
         self,
         model_endpoint_record: ModelEndpoint,
         model_endpoint_full_dict: dict,
         latest: bool,
-    ) -> dict:
-        if model_endpoint_record.function and latest:
-            model_endpoint_full_dict[ModelEndpointSchema.FUNCTION_NAME] = (
-                model_endpoint_record.function.name
-            )
-            function_tag_list = model_endpoint_record.function.tags
+    ) -> (dict, dict):
+        runtimes = {}
+        t60 = time.monotonic()
+        function = model_endpoint_record.function
+        t61 = time.monotonic()
+        runtimes["t61"] = t61 - t60
+        if function and latest:
+            model_endpoint_full_dict[ModelEndpointSchema.FUNCTION_NAME] = function.name
+            t62 = time.monotonic()
+            runtimes["t62"] = t62 - t61
+            function_tag_list = function.tags
+            t63 = time.monotonic()
+            runtimes["t63"] = t63 - t62
             model_endpoint_full_dict[ModelEndpointSchema.FUNCTION_TAGS] = (
                 [tag.name for tag in function_tag_list] if function_tag_list else []
             )
+            t64 = time.monotonic()
+            runtimes["t64"] = t64 - t63
             model_endpoint_full_dict[ModelEndpointSchema.FUNCTION_TAG] = (
                 self._get_function_tag(function_tag_list)
             )
-            model_endpoint_full_dict[ModelEndpointSchema.STATE] = (
-                model_endpoint_record.function.state
-            )
+            t65 = time.monotonic()
+            runtimes["t65"] = t65 - t64
+            model_endpoint_full_dict[ModelEndpointSchema.STATE] = function.state
+            t66 = time.monotonic()
+            runtimes["t66"] = t66 - t65
             model_endpoint_full_dict[ModelEndpointSchema.FUNCTION_URI] = (
                 generate_object_uri(
-                    project=model_endpoint_record.function.project,
-                    name=model_endpoint_record.function.name,
-                    hash_key=model_endpoint_record.function.uid,
+                    project=function.project,
+                    name=function.name,
+                    hash_key=function.uid,
                 )
             )
+            t67 = time.monotonic()
+            runtimes["t67"] = t67 - t66
 
         else:
             model_endpoint_full_dict[ModelEndpointSchema.FUNCTION_NAME] = ""
@@ -5717,7 +5754,7 @@ class SQLDB(DBInterface):
             model_endpoint_full_dict[ModelEndpointSchema.FUNCTION_TAGS] = []
             model_endpoint_full_dict[ModelEndpointSchema.STATE] = "unknown"
             model_endpoint_full_dict[ModelEndpointSchema.FUNCTION_URI] = None
-        return model_endpoint_full_dict
+        return model_endpoint_full_dict, runtimes
 
     def _get_function_tag(self, function_tag_list):
         latest = False
@@ -5733,14 +5770,25 @@ class SQLDB(DBInterface):
     @staticmethod
     def _fill_model_endpoint_with_model_data(
         model_endpoint_record: ModelEndpoint, model_endpoint_full_dict: dict
-    ) -> dict:
+    ) -> (dict, dict):
+        runtimes = {}
+
+        t70 = time.monotonic()
         model = model_endpoint_record.model
+        t71 = time.monotonic()
+        runtimes["t71"] = t71 - t70
         if model:
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_NAME] = model.key
+            t72 = time.monotonic()
+            runtimes["t72"] = t72 - t71
             model_tags = model.tags
+            t73 = time.monotonic()
+            runtimes["t73"] = t73 - t72
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_TAGS] = (
                 [tag.name for tag in model_tags] if model_tags else []
             )
+            t74 = time.monotonic()
+            runtimes["t74"] = t74 - t73
             model_artifact_uri = mlrun.datastore.get_store_uri(
                 kind=mlrun.utils.helpers.StorePrefix.Model,
                 uri=generate_artifact_uri(
@@ -5751,13 +5799,15 @@ class SQLDB(DBInterface):
                     uid=model.uid,
                 ),
             )
+            t75 = time.monotonic()
+            runtimes["t75"] = t75 - t74
 
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_URI] = model_artifact_uri
         else:
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_NAME] = ""
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_TAGS] = []
             model_endpoint_full_dict[ModelEndpointSchema.MODEL_URI] = None
-        return model_endpoint_full_dict
+        return model_endpoint_full_dict, runtimes
 
     def _transform_project_record_to_schema(
         self, session: Session, project_record: Project
