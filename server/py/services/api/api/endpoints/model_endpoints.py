@@ -270,7 +270,7 @@ async def list_model_endpoints(
         latest_only=latest_only,
         db_session=db_session,
     )
-    logger.info(f"Got {len(endpoints)} model endpoints")
+    logger.info(f"Got {len(endpoints.endpoints)} model endpoints")
     allowed_endpoints = await framework.utils.auth.verifier.AuthVerifier().filter_project_resources_by_permissions(
         schemas.AuthorizationResourceTypes.model_endpoint,
         endpoints.endpoints,
