@@ -22,6 +22,7 @@ import re
 import time
 import typing
 import urllib.parse
+import uuid
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Union
@@ -7671,7 +7672,24 @@ class SQLDB(DBInterface):
         order_by: typing.Optional[str] = None,
     ) -> mlrun.common.schemas.ModelEndpointList:
         model_endpoints: list[mlrun.common.schemas.ModelEndpoint] = []
-        for mep_record in self._find_model_endpoints(
+        local_id = str(uuid.uuid4())
+        logger.info(
+            "Finding model endpoints...",
+            names=names,
+            project=project,
+            labels=labels,
+            function_name=function_name,
+            function_tag=function_tag,
+            model_name=model_name,
+            model_tag=model_tag,
+            top_level=top_level,
+            uids=uids,
+            latest_only=latest_only,
+            offset=offset,
+            limit=limit,
+            order_by=order_by,
+        )
+        query = self._find_model_endpoints(
             session=session,
             names=names,
             project=project,
@@ -7688,10 +7706,43 @@ class SQLDB(DBInterface):
             offset=offset,
             limit=limit,
             order_by=order_by,
-        ):
-            model_endpoints.append(
-                self._transform_model_endpoint_model_to_schema(mep_record)
+        )
+        t0 = time.monotonic()
+        res = list(query)
+        t1 = time.monotonic()
+        cumulative_runtimes = {}
+        for i, mep_record in enumerate(res):
+            if (i + 1) % 500 == 0:
+                logger.info(
+                    f"Transforming model endpoint #{i + 1}...",
+                    local_id=local_id,
+                )
+            start_transform = time.monotonic()
+            model_endpoint, runtimes = self._transform_model_endpoint_model_to_schema(
+                mep_record
             )
+            end_transform = time.monotonic()
+            cumulative_runtimes["transform"] = cumulative_runtimes.get(
+                "transform", 0
+            ) + (end_transform - start_transform)
+            for segment, runtime in runtimes.items():
+                cumulative_runtimes[segment] = (
+                    cumulative_runtimes.get(segment, 0) + runtime
+                )
+            model_endpoints.append(model_endpoint)
+
+        for segment in cumulative_runtimes:
+            cumulative_runtimes[segment] = f"{cumulative_runtimes[segment]:.2f}"
+        logger.info(
+            f"Returning {len(model_endpoints)} model endpoints...",
+            local_id=local_id,
+            runtimes=cumulative_runtimes,
+        )
+        logger.info(
+            "Returning an empty list of model endpoints...",
+            query_result_size=len(res),
+            query_time=f"{t1 - t0:.2f}",
+        )
         return mlrun.common.schemas.ModelEndpointList(endpoints=model_endpoints)
 
     def delete_model_endpoint(
