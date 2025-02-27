@@ -7734,11 +7734,18 @@ class SQLDB(DBInterface):
         for segment in cumulative_runtimes:
             cumulative_runtimes[segment] = f"{cumulative_runtimes[segment]:.2f}"
         logger.info(
-            f"Returning {len(model_endpoints)} model endpoints...",
+            f"Wrapping {len(model_endpoints)} model endpoints in a ModelEndpointList object...",
             local_id=local_id,
             runtimes=cumulative_runtimes,
         )
-        return mlrun.common.schemas.ModelEndpointList(endpoints=model_endpoints)
+        endpoint_list = mlrun.common.schemas.ModelEndpointList(
+            endpoints=model_endpoints
+        )
+        logger.info(
+            f"Returning {len(model_endpoints)} model endpoints...",
+            local_id=local_id,
+        )
+        return endpoint_list
 
     def delete_model_endpoint(
         self,
