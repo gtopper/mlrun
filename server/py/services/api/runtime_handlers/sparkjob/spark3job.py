@@ -204,6 +204,7 @@ with ctx:
         update_in(job, "spec.driver.volumeMounts", runtime.spec.volume_mounts)
         update_in(job, "spec.executor.volumeMounts", runtime.spec.volume_mounts)
         update_in(job, "spec.deps", runtime.spec.deps)
+        update_in(job, "spec.sparkConfigMap", "")
 
         spark_conf = runtime.spec.spark_conf
         if spark_conf:
