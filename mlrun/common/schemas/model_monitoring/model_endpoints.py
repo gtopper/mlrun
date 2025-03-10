@@ -117,13 +117,14 @@ class ModelEndpointMetadata(ObjectMetadata, ModelEndpointParser):
 
 
 class ModelEndpointSpec(ObjectSpec, ModelEndpointParser):
+    model_uid: Optional[str] = ""
+    model_name: Optional[str] = ""
+    model_db_key: Optional[str] = ""
+    model_tag: Optional[str] = ""
     model_class: Optional[str] = ""
     function_name: Optional[str] = ""
     function_tag: Optional[str] = ""
-    model_path: Optional[str] = ""
-    model_name: Optional[str] = ""
-    model_tags: Optional[list[str]] = []
-    _model_id: Optional[int] = ""
+    function_uid: Optional[str] = ""
     feature_names: Optional[list[str]] = []
     label_names: Optional[list[str]] = []
     feature_stats: Optional[dict] = {}
@@ -136,8 +137,12 @@ class ModelEndpointSpec(ObjectSpec, ModelEndpointParser):
     @classmethod
     def mutable_fields(cls):
         return [
-            "model_path",
+            "model_uid",
+            "model_name",
+            "model_db_key",
+            "model_tag",
             "model_class",
+            "function_uid",
             "feature_names",
             "label_names",
             "children",
@@ -201,6 +206,7 @@ class ModelEndpoint(BaseModel):
             ModelEndpointSchema.CURRENT_STATS,
             ModelEndpointSchema.DRIFT_MEASURES,
             ModelEndpointSchema.FUNCTION_URI,
+            ModelEndpointSchema.MODEL_URI,
         }
         # Initialize a flattened dictionary that will be filled with the model endpoint dictionary attributes
         flatten_dict = {}

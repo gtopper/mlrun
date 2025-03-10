@@ -16,7 +16,7 @@
 """add system metadata table
 
 Revision ID: 57d26493fbff
-Revises: d259d95707b3
+Revises: 537d9a20c4b4
 Create Date: 2024-12-17 12:21:07.242210
 
 """
@@ -26,7 +26,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "57d26493fbff"
-down_revision = "d259d95707b3"
+down_revision = "537d9a20c4b4"
 branch_labels = None
 depends_on = None
 

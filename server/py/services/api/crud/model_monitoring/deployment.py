@@ -58,6 +58,7 @@ import framework.utils.singletons.k8s
 import services.api.api.endpoints.nuclio
 import services.api.crud.model_monitoring.helpers
 import services.api.utils.functions
+from framework.db.sqldb.db import unversioned_tagged_object_uid_prefix
 from framework.db.sqldb.models import ModelEndpoint
 
 _STREAM_PROCESSING_FUNCTION_PATH = mlrun.model_monitoring.stream_processing.__file__
@@ -1344,27 +1345,27 @@ class MonitoringDeployment:
     @staticmethod
     async def create_model_endpoints(
         function_name: str,
-        function_tag: str,
         project: str,
         model_endpoints_instructions: list[
             tuple[
                 mlrun.common.schemas.ModelEndpoint,
                 mm_constants.ModelEndpointCreationStrategy,
+                str,
             ]
         ],
     ):
         """
         Create model endpoints for the given function.
         1. Create model endpoint instructions list from the function graph.
-        The list is tuple which created from the model endpoint object and creation strategy
+        The list is tuple which created from the model endpoint object, creation strategy and model path.
         2. Create the Node/Leaf model endpoints according to the instructions list.
         3. Update the router model endpoint instructions with the children uids.
         4. Create the Router model endpoints according to the instructions list.
 
         :param function_name:                The name of the function.
         :param project:                      The project name.
-        :param model_endpoints_instructions: list of tuples of ModelEndpoint schema, CreationStrategy
-
+        :param model_endpoints_instructions: list of tuples of ModelEndpoint schema, CreationStrategy and str stands
+                                             for model_path
         """
         logger.info(
             "Start Running BGT for model endpoint creation",
@@ -1379,11 +1380,7 @@ class MonitoringDeployment:
             batch = model_endpoints_instructions[i : i + batchsize]
             coroutines.append(
                 MonitoringDeployment._create_model_endpoint_limited(
-                    semaphore=semaphore,
-                    model_endpoints_instructions=batch,
-                    project=project,
-                    function_name=function_name,
-                    function_tag=function_tag or "latest",
+                    semaphore, batch, project
                 )
             )
 
@@ -1401,19 +1398,16 @@ class MonitoringDeployment:
             tuple[
                 mlrun.common.schemas.ModelEndpoint,
                 mm_constants.ModelEndpointCreationStrategy,
+                str,
             ]
         ],
         project: str,
-        function_name: str,
-        function_tag: str,
     ):
         async with semaphore:
             result = await framework.db.session.run_async_function_with_new_db_session(
                 func=services.api.crud.ModelEndpoints().create_model_endpoints,
                 model_endpoints_instructions=model_endpoints_instructions,
                 project=project,
-                function_name=function_name,
-                function_tag=function_tag,
             )
             return result
 
@@ -1428,6 +1422,7 @@ class MonitoringDeployment:
             tuple[
                 mlrun.common.schemas.ModelEndpoint,
                 mm_constants.ModelEndpointCreationStrategy,
+                str,
             ]
         ],
         dict,
@@ -1456,12 +1451,12 @@ class MonitoringDeployment:
                 str,
             ]
         ]
-        function_tag = function.metadata.tag or "latest"
+
         model_endpoints_dict: dict[str, ModelEndpoint] = await run_in_threadpool(
             framework.utils.singletons.db.get_db().list_model_endpoints,
             project=project,
             function_name=function_name,
-            function_tag=function_tag,
+            function_tag=function.metadata.tag,
             latest_only=True,
             session=db_session,
             as_dict=True,
@@ -1469,8 +1464,8 @@ class MonitoringDeployment:
 
         model_endpoints_instructions, graph = (
             self._extract_model_endpoints_from_function_graph(
-                function_name=function_name,
-                function_tag=function_tag,
+                function_name=function.metadata.name,
+                function_tag=function.metadata.tag or "latest",
                 track_models=function.spec.track_models,
                 graph=function.spec.graph,
                 sampling_percentage=function.spec.parameters.get(
@@ -1499,6 +1494,7 @@ class MonitoringDeployment:
             tuple[
                 mlrun.common.schemas.ModelEndpoint,
                 mm_constants.ModelEndpointCreationStrategy,
+                str,
             ]
         ],
         typing.Union[
@@ -1545,6 +1541,7 @@ class MonitoringDeployment:
         tuple[
             mlrun.common.schemas.ModelEndpoint,
             mm_constants.ModelEndpointCreationStrategy,
+            str,
         ]
     ]:
         model_endpoints_instructions = []
@@ -1575,9 +1572,9 @@ class MonitoringDeployment:
                             sampling_percentage=sampling_percentage,
                             uid=uid,
                             label_names=route.class_args.get("outputs"),
-                            model_path=route.class_args.get("model_path", ""),
                         ),
                         route.model_endpoint_creation_strategy,
+                        route.class_args.get("model_path", ""),
                     )
                 )
                 routes_names.append(route.name)
@@ -1609,6 +1606,7 @@ class MonitoringDeployment:
                         uid=uid,
                     ),
                     router_step.model_endpoint_creation_strategy,
+                    "",
                 )
             )
 
@@ -1627,6 +1625,7 @@ class MonitoringDeployment:
         tuple[
             mlrun.common.schemas.ModelEndpoint,
             mm_constants.ModelEndpointCreationStrategy,
+            str,
         ]
     ]:
         model_endpoints_instructions = []
@@ -1665,10 +1664,10 @@ class MonitoringDeployment:
                                 function_name=function_name,
                                 function_tag=function_tag,
                                 track_models=track_models,
-                                model_path=step.class_args.get("model_path", ""),
                                 uid=uid,
                             ),
                             step.model_endpoint_creation_strategy,
+                            step.class_args.get("model_path", ""),
                         )
                     )
         return model_endpoints_instructions
@@ -1706,7 +1705,6 @@ class MonitoringDeployment:
         children_uids: typing.Optional[list[str]] = None,
         sampling_percentage: typing.Optional[float] = None,
         label_names: typing.Optional[list[str]] = None,
-        model_path: typing.Optional[str] = None,
     ) -> mlrun.common.schemas.ModelEndpoint:
         function_tag = function_tag or "latest"
         return mlrun.common.schemas.ModelEndpoint(
@@ -1716,11 +1714,11 @@ class MonitoringDeployment:
             spec=mlrun.common.schemas.ModelEndpointSpec(
                 function_name=function_name,
                 function_tag=function_tag,
+                function_uid=f"{unversioned_tagged_object_uid_prefix}{function_tag}",  # TODO: remove after ML-8596
                 label_names=label_names or [],
                 model_class=model_class,
                 children=children_names,
                 children_uids=children_uids,
-                model_path=model_path,
             ),
             status=mlrun.common.schemas.ModelEndpointStatus(
                 monitoring_mode=mlrun.common.schemas.model_monitoring.ModelMonitoringMode.enabled
@@ -1735,12 +1733,12 @@ class MonitoringDeployment:
         db_session: sqlalchemy.orm.Session,
         background_tasks: BackgroundTasks,
         function_name: str,
-        function_tag: str,
         project_name: str,
         model_endpoints_instructions: list[
             tuple[
                 mlrun.common.schemas.ModelEndpoint,
                 mm_constants.ModelEndpointCreationStrategy,
+                str,
             ]
         ],
     ):
@@ -1753,7 +1751,6 @@ class MonitoringDeployment:
             mlrun.mlconf.background_tasks.default_timeouts.operations.model_endpoint_creation,
             background_task_name,
             function_name,
-            function_tag,
             project_name,
             model_endpoints_instructions,
         )
