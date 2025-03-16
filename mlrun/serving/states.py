@@ -1806,9 +1806,9 @@ def params_to_step(
         cls = classes_map.get(kind, RootFlowStep)
         step = cls.from_dict(struct)
         step.function = function
-        step.full_event = full_event or step.full_event
-        step.input_path = input_path or step.input_path
-        step.result_path = result_path or step.result_path
+        step.full_event = full_event or getattr(step, "full_event", None)
+        step.input_path = input_path or getattr(step, "input_path", None)
+        step.result_path = result_path or getattr(step, "result_path", None)
         if kind == StepKinds.task:
             step.model_endpoint_creation_strategy = model_endpoint_creation_strategy
             step.endpoint_type = endpoint_type
