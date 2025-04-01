@@ -501,6 +501,9 @@ class ProcessEndpointEvent(mlrun.feature_store.steps.MapClass):
                     self.first_request[endpoint_id] = first_request
 
                 last_request = endpoint_record.get(EventFieldType.LAST_REQUEST)
+
+                logger.info(f"111 resume_state: endpoint_id={endpoint_id} last_request={last_request}")
+
                 if last_request:
                     self.last_request[endpoint_id] = last_request
 
