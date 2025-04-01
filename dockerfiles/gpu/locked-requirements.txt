@@ -4425,7 +4425,7 @@ statsmodels==0.14.4 \
     --hash=sha256:e332c2d9b806083d1797231280602340c5c913f90d4caa0213a6a54679ce9331 \
     --hash=sha256:f5f537f7d000de4a1708c63400755152b862cd4926bb81a86568e347c19c364b
     # via pyod
-storey @ git+https://github.com/gtopper/storey.git@b0377634ced815d612e442ff939840c8d44e3233
+storey @ git+https://github.com/gtopper/storey.git@8b93abd2ea7cb8711b8c2c514dcc0e7b637d5217
     # via -r requirements.txt
 sympy==1.13.3 \
     --hash=sha256:54612cf55a62755ee71824ce692986f23c88ffa77207b30c1368eda4a7060f73 \
