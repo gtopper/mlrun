@@ -3662,7 +3662,7 @@ starlette==0.46.1 \
     --hash=sha256:3c88d58ee4bd1bb807c0d1acb381838afc7752f9ddaec81bbe4383611d833230 \
     --hash=sha256:77c74ed9d2720138b25875133f3a2dae6d854af2ec37dceb56aef370c1d8a227
     # via fastapi
-storey @ git+https://github.com/gtopper/storey.git@8b93abd2ea7cb8711b8c2c514dcc0e7b637d5217
+storey @ git+https://github.com/gtopper/storey.git@2081201f549c81f134bbb4946c7b1c7765b6ec13
     # via -r requirements.txt
 strip-hints==0.1.13 ; python_full_version < '3.11' \
     --hash=sha256:1feaebde61269ba0dea1e7f093df7ff9d4df4980cce7e3c22ed6d86ae43dbd06 \
@@ -3684,8 +3684,8 @@ taos-ws-py==0.3.2 \
     # via
     #   -r extras-requirements.txt
     #   taoswswrap
-taoswswrap==0.3.4 \
-    --hash=sha256:5df2386566a121b46c1db63e454efefb5026eab053b3138faa798d27282ad2e7
+taoswswrap==0.3.5 \
+    --hash=sha256:cd90f2a52629157891917261a09e4dd7e5041e269967c920eaebdd4d0e83b2dc
     # via -r extras-requirements.txt
 tblib==3.1.0 \
     --hash=sha256:06404c2c9f07f66fee2d7d6ad43accc46f9c3361714d9b8426e7f47e595cd652 \
