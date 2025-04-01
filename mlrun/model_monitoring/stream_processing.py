@@ -382,7 +382,9 @@ class ProcessEndpointEvent(mlrun.feature_store.steps.MapClass):
             # Set time for the first request of the current endpoint
             self.first_request[endpoint_id] = timestamp
 
-        logger.info(f"111 ProcessEndpointEvent: self.last_request[{endpoint_id}] = {timestamp}")
+        logger.info(
+            f"111 ProcessEndpointEvent: self.last_request[{endpoint_id}] = {timestamp}"
+        )
         # Set time for the last reqeust of the current endpoint
         self.last_request[endpoint_id] = timestamp
 
@@ -503,7 +505,9 @@ class ProcessEndpointEvent(mlrun.feature_store.steps.MapClass):
 
                 last_request = endpoint_record.get(EventFieldType.LAST_REQUEST)
 
-                logger.info(f"111 resume_state: endpoint_id={endpoint_id} last_request={last_request}")
+                logger.info(
+                    f"111 resume_state: endpoint_id={endpoint_id} last_request={last_request}"
+                )
 
                 if last_request:
                     self.last_request[endpoint_id] = last_request
