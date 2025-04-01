@@ -285,7 +285,7 @@ class V3IOTSDBConnector(TSDBConnector):
         graph.add_step(
             "storey.NoSqlTarget",
             name="KVLastRequest",
-            after="tsdb_predictions",
+            after="FilterNOP",
             table=f"v3io:///users/{self.last_request_table}",
             columns=[EventFieldType.LAST_REQUEST_TIMESTAMP],
             index_cols=[EventFieldType.ENDPOINT_ID],
