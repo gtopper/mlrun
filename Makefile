@@ -235,7 +235,7 @@ DEFAULT_IMAGES += $(MLRUN_IMAGE_NAME_TAGGED)
 .PHONY: mlrun
 mlrun: update-version-file ## Build mlrun docker image
 	$(MLRUN_CACHE_IMAGE_PULL_COMMAND)
-	docker build \
+	docker build --progress plain \
 		--file dockerfiles/mlrun/Dockerfile \
 		--build-arg MLRUN_ANACONDA_PYTHON_DISTRIBUTION=$(MLRUN_ANACONDA_PYTHON_DISTRIBUTION) \
 		--build-arg MLRUN_PYTHON_VERSION=$(MLRUN_PYTHON_VERSION) \

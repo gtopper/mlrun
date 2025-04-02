@@ -77,7 +77,7 @@ ENV UV_SYSTEM_PYTHON=true UV_LINK_MODE=copy
 RUN --mount=from=uv-image,source=/uv,target=/bin/uv \
     --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=dockerfiles/mlrun/locked-requirements.txt,target=locked-requirements.txt \
-    uv pip install --no-deps --require-hashes -r locked-requirements.txt
+    uv pip install -v --no-deps -r locked-requirements.txt
 
 COPY . .
 
