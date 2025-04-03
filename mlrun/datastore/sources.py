@@ -971,13 +971,18 @@ class OnlineSource(BaseSourceDriver):
     def set_explicit_ack_mode(function: Function, **extra_arguments) -> dict[str, Any]:
         extra_arguments = extra_arguments or {}
         engine = "sync"
+        print(f"111 set_explicit_ack_mode: function.spec={function.spec}")
         if (
             function.spec
             and hasattr(function.spec, "graph")
             and function.spec.graph
             and function.spec.graph.engine
         ):
+            print(f"111 set_explicit_ack_mode: set engine to {function.spec.graph.engine}")
             engine = function.spec.graph.engine
+        print(f"111 set_explicit_ack_mode: mlrun.mlconf.is_explicit_ack_enabled()? "
+              f"{mlrun.mlconf.is_explicit_ack_enabled()}")
+        print(f"111 set_explicit_ack_mode: engine=engine")
         if mlrun.mlconf.is_explicit_ack_enabled() and engine == "async":
             extra_arguments["explicit_ack_mode"] = extra_arguments.get(
                 "explicit_ack_mode", "explicitOnly"
@@ -1128,8 +1133,11 @@ class KafkaSource(OnlineSource):
             extra_attributes = copy(self.attributes)
         partitions = extra_attributes.pop("partitions", None)
 
+        print(f"111 KafkaSource.add_nuclio_trigger before set_explicit_ack_mode: extra_attributes={extra_attributes}")
         extra_attributes = self.set_explicit_ack_mode(function, **extra_attributes)
+        print(f"111 KafkaSource.add_nuclio_trigger after set_explicit_ack_mode: extra_attributes={extra_attributes}")
         explicit_ack_mode = extra_attributes.get("explicit_ack_mode")
+        print(f"111 KafkaSource.add_nuclio_trigger: explicit_ack_mode={explicit_ack_mode}")
         extra_attributes["workerAllocationMode"] = extra_attributes.get(
             "worker_allocation_mode", "pool"
         )
