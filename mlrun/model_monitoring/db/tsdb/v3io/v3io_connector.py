@@ -282,14 +282,14 @@ class V3IOTSDBConnector(TSDBConnector):
         )
 
         # Write last request timestamp to KV table
-        # graph.add_step(
-        #     "storey.NoSqlTarget",
-        #     name="KVLastRequest",
-        #     after="FilterNOP",
-        #     table=f"v3io:///users/{self.last_request_table}",
-        #     columns=[EventFieldType.LAST_REQUEST_TIMESTAMP],
-        #     index_cols=[EventFieldType.ENDPOINT_ID],
-        # )
+        graph.add_step(
+            "storey.NoSqlTarget",
+            name="KVLastRequest",
+            after="FilterNOP",
+            table=f"v3io:///users/{self.last_request_table}",
+            columns=[EventFieldType.LAST_REQUEST_TIMESTAMP],
+            index_cols=[EventFieldType.ENDPOINT_ID],
+        )
 
         # Emits the event in window size of events based on sample_window size (10 by default)
         graph.add_step(
