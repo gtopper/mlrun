@@ -3489,7 +3489,7 @@ starlette==0.46.1 \
     --hash=sha256:3c88d58ee4bd1bb807c0d1acb381838afc7752f9ddaec81bbe4383611d833230 \
     --hash=sha256:77c74ed9d2720138b25875133f3a2dae6d854af2ec37dceb56aef370c1d8a227
     # via fastapi
-storey @ git+https://github.com/gtopper/storey.git@6e4718426c1ed11a7734ad55666cb08d715e9272
+storey @ git+https://github.com/gtopper/storey.git@4af06ef03e1376d68f252607393b85c8338095bc
     # via -r requirements.txt
 tabulate==0.8.10 \
     --hash=sha256:0ba055423dbaa164b9e456abe7920c5e8ed33fcc16f6d1b2f2d152c8e1e8b4fc \
