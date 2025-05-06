@@ -20,8 +20,9 @@ import os
 import socket
 import traceback
 import uuid
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
+import storey
 from nuclio import Context as NuclioContext
 from nuclio.request import Logger as NuclioLogger
 
@@ -367,6 +368,54 @@ def v2_serving_init(context, namespace=None):
         context.logger.info(server.to_yaml())
 
     _set_callbacks(server, context)
+
+
+async def async_execute_graph(
+    context,
+    inputs,
+    namespace=None,
+) -> (list[Any], Any):
+    spec = mlrun.utils.get_serving_spec()
+    server = GraphServer.from_dict(spec)
+
+    if config.log_level.lower() == "debug":
+        server.verbose = True
+    context.logger.info_with(
+        "Initializing states", namespace=namespace or get_caller_globals()
+    )
+    kwargs = {}
+    if hasattr(context, "is_mock"):
+        kwargs["is_mock"] = context.is_mock
+    server.init_states(
+        context,
+        namespace or get_caller_globals(),
+        **kwargs,
+    )
+    context.logger.info("Initializing graph steps")
+    server.init_object(namespace or get_caller_globals())
+
+    context.logger.info_with("Graph was initialized", verbose=server.verbose)
+
+    if server.verbose:
+        context.logger.info(server.to_yaml())
+
+    df = inputs.as_df()
+
+    responses = []
+    for index, row in df.iterrows():
+        event = storey.Event(body=row.to_dict())
+        response = await server.run(event, context)
+        responses.append(response.body)
+
+    termination_result = server.wait_for_completion()
+    if asyncio.iscoroutine(termination_result):
+        termination_result = await termination_result
+
+    return responses, termination_result
+
+
+def execute_graph(context, inputs, namespace=None) -> (list[Any], Any):
+    return asyncio.run(async_execute_graph(context, inputs, namespace=namespace))
 
 
 def _set_callbacks(server, context):

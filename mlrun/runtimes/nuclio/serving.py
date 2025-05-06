@@ -39,6 +39,8 @@ from mlrun.serving.states import (
 )
 from mlrun.utils import get_caller_globals, logger, set_paths
 
+from .. import KubejobRuntime
+from ..pod import KubeResourceSpec
 from .function import NuclioSpec, RemoteRuntime, min_nuclio_versions
 
 serving_subkind = "serving_v2"
@@ -703,7 +705,7 @@ class ServingRuntime(RemoteRuntime):
             force_build=force_build,
         )
 
-    def _get_serving_spec(self):
+    def _get_serving_spec(self, as_json=True):
         function_name_uri_map = {f.name: f.uri(self) for f in self.spec.function_refs}
         serving_spec = {
             "function_name": self.metadata.name,
@@ -728,7 +730,10 @@ class ServingRuntime(RemoteRuntime):
             self._secrets = SecretsStore.from_list(self.spec.secret_sources)
             serving_spec["secret_sources"] = self._secrets.to_serial()
 
-        return json.dumps(serving_spec)
+        if as_json:
+            return json.dumps(serving_spec)
+
+        return serving_spec
 
     def to_mock_server(
         self,
@@ -822,3 +827,13 @@ class ServingRuntime(RemoteRuntime):
             "Turn off the mock (mock=False) and make sure Nuclio is installed for real deployment to Nuclio"
         )
         self._mock_server = self.to_mock_server()
+
+    def to_job(self, target_mapping: Optional[dict] = None) -> KubejobRuntime:
+        job = KubejobRuntime(
+            spec=KubeResourceSpec(
+                serving_spec=self._get_serving_spec(as_json=False),
+                default_handler="mlrun.serving.server.execute_graph",
+            ),
+            metadata=self.metadata,
+        )
+        return job

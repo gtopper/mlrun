@@ -179,6 +179,7 @@ class KubeResourceSpec(FunctionSpec):
         security_context=None,
         clone_target_dir=None,
         state_thresholds=None,
+        serving_spec=None,
     ):
         super().__init__(
             command=command,
@@ -229,6 +230,7 @@ class KubeResourceSpec(FunctionSpec):
         # _dict_fields and doesn't have a setter.
         self._termination_grace_period_seconds = None
         self.__fields_pending_discard = {}
+        self._serving_spec = serving_spec
 
     @property
     def volumes(self) -> list:
