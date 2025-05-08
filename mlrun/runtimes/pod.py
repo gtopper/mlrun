@@ -304,6 +304,10 @@ class KubeResourceSpec(FunctionSpec):
     def termination_grace_period_seconds(self) -> typing.Optional[int]:
         return self._termination_grace_period_seconds
 
+    @property
+    def serving_spec(self):
+        return self._serving_spec
+
     def _serialize_field(
         self, struct: dict, field_name: typing.Optional[str] = None, strip: bool = False
     ) -> typing.Any:

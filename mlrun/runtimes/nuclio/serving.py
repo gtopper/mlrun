@@ -735,6 +735,10 @@ class ServingRuntime(RemoteRuntime):
 
         return serving_spec
 
+    @property
+    def serving_spec(self):
+        return self._get_serving_spec()
+
     def to_mock_server(
         self,
         namespace=None,

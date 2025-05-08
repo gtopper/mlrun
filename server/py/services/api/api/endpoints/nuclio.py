@@ -514,7 +514,7 @@ def _deploy_function(
 
         # Enrich runtime
         launcher = services.api.launcher.ServerSideLauncher(auth_info=auth_info)
-        launcher.enrich_runtime(runtime=fn, full=True)
+        launcher.enrich_runtime(runtime=fn, full=True, client_version=client_version)
 
         fn.pre_deploy_validation()
         # before saving function to DB, we need to mask some nuclio-specific fields
@@ -535,6 +535,13 @@ def _deploy_function(
             db_session,
             fn,
         )
+
+        serving_spec_volume = getattr(fn.spec, "serving_spec_volume")
+        if serving_spec_volume is not None:
+            mlrun.utils.update_in(
+                config, "spec.volumes", serving_spec_volume, append=True
+            )
+
         # after deploying the function, we need to re-mask the sensitive data again and save to the db
         fn.mask_sensitive_data_in_config()
         fn.save(versioned=False)

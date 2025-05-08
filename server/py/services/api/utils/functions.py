@@ -62,7 +62,9 @@ def build_function(
         launcher = services.api.launcher.ServerSideLauncher(auth_info=auth_info)
         # When runtime is nuclio, building means we deploy the function and not just build its image,
         # so we need full enrichment
-        launcher.enrich_runtime(runtime=fn, full=is_nuclio_deploy)
+        launcher.enrich_runtime(
+            runtime=fn, full=is_nuclio_deploy, client_version=client_version
+        )
 
         if is_nuclio_deploy:
             fn: mlrun.runtimes.RemoteRuntime
@@ -100,6 +102,10 @@ def build_function(
             if log_file.exists() and not (skip_deployed and fn.is_deployed()):
                 # delete old build log file if exist and build is not skipped
                 os.remove(str(log_file))
+
+            serving_spec_volume = getattr(fn.spec, "serving_spec_volume")
+            if serving_spec_volume is not None:
+                fn.spec.volumes.append(serving_spec_volume)
 
             ready = build_runtime(
                 auth_info,
