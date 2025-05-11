@@ -82,8 +82,7 @@ class TSDBConnector(ABC):
 
     @abstractmethod
     def delete_tsdb_records(
-        self,
-        endpoint_ids: list[str],
+        self, endpoint_ids: list[str], delete_timeout: Optional[int] = None
     ) -> None:
         """
         Delete model endpoint records from the TSDB connector.
