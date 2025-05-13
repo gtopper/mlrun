@@ -372,7 +372,7 @@ def v2_serving_init(context, namespace=None):
 
 async def async_execute_graph(
     context,
-    inputs,
+    inputs,  # TODO: rename parameter. Also TODO: cannot annotated with : DatasetArtifact due to cyclic imports.
     namespace=None,
 ) -> (list[Any], Any):
     spec = mlrun.utils.get_serving_spec()
