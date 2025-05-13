@@ -103,6 +103,7 @@ class KubeResourceSpec(FunctionSpec):
         "preemption_mode",
         "security_context",
         "state_thresholds",
+        "serving_spec",
     ]
     _default_fields_to_strip = FunctionSpec._default_fields_to_strip + [
         "volumes",
@@ -226,11 +227,11 @@ class KubeResourceSpec(FunctionSpec):
             state_thresholds
             or mlrun.mlconf.function.spec.state_thresholds.default.to_dict()
         )
+        self.serving_spec = serving_spec
         # Termination grace period is internal for runtimes that have a pod termination hook hence it is not in the
         # _dict_fields and doesn't have a setter.
         self._termination_grace_period_seconds = None
         self.__fields_pending_discard = {}
-        self._serving_spec = serving_spec
 
     @property
     def volumes(self) -> list:
@@ -303,10 +304,6 @@ class KubeResourceSpec(FunctionSpec):
     @property
     def termination_grace_period_seconds(self) -> typing.Optional[int]:
         return self._termination_grace_period_seconds
-
-    @property
-    def serving_spec(self):
-        return self._serving_spec
 
     def _serialize_field(
         self, struct: dict, field_name: typing.Optional[str] = None, strip: bool = False
