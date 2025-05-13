@@ -835,7 +835,7 @@ class ServingRuntime(RemoteRuntime):
     def to_job(self, target_mapping: Optional[dict] = None) -> KubejobRuntime:
         job = KubejobRuntime(
             spec=KubeResourceSpec(
-                serving_spec=self._get_serving_spec(as_json=False),
+                serving_spec=self._get_serving_spec(as_json=True),
                 default_handler="mlrun.serving.server.execute_graph",
             ),
             metadata=self.metadata,
