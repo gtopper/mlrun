@@ -439,6 +439,7 @@ class ServerSideLauncher(launcher.BaseLauncher):
             ]
 
         serving_spec = getattr(runtime.spec, "serving_spec")
+        print(f"111 enrich_runtime: runtime.spec={runtime.spec}")
         print(f"111 enrich_runtime: serving_spec={serving_spec}")
         if serving_spec:
             serving_spec_volume = self._configure_serving_spec(
