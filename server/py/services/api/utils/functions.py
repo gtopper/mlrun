@@ -103,6 +103,7 @@ def build_function(
                 # delete old build log file if exist and build is not skipped
                 os.remove(str(log_file))
 
+            print(f"111 build_function: fn.spec={fn.spec}")
             serving_spec_volume = getattr(fn.spec, "serving_spec_volume")
             if serving_spec_volume is not None:
                 fn.spec.volumes.append(serving_spec_volume)
