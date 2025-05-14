@@ -752,11 +752,12 @@ class K8sHelper(mlsecrets.SecretProviderInterface):
     ):
         namespace = self.resolve_namespace(namespace)
         have_confmap = False
-        label_name = mlrun_constants.MLRunInternalLabels.resource_name
+        label_name = mlrun_constants.MLRunInternalLabels.resource_nameA
         labels = labels or {}
         labels[label_name] = resource_name
         labels[mlrun_constants.MLRunInternalLabels.project] = project
 
+        # TODO: resource_name ends up containing the spec
         print(f"111 ensure_configmap: configmap_with_label = self.get_configmap({resource_name}, {namespace})")
         configmap_with_label = self.get_configmap(resource_name, namespace)
         if configmap_with_label:
