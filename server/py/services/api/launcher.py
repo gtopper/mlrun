@@ -356,6 +356,11 @@ class ServerSideLauncher(launcher.BaseLauncher):
                 function_name = mlrun.runtimes.nuclio.function.get_fullname(
                     function.metadata.name, project, function.metadata.tag
                 )
+                print(
+                    "111 _configure_serving_spec: mlrun.runtimes.nuclio.function.get_fullname("
+                    f"{function.metadata.name}, {project}, {function.metadata.tag})"
+                )
+                print(f"111 _configure_serving_spec: function_name={function_name}")
                 k8s_helper = framework.utils.singletons.k8s.get_k8s_helper()
                 confmap_name = k8s_helper.ensure_configmap(
                     mlrun.common.constants.MLRUN_SERVING_CONF,
@@ -442,6 +447,10 @@ class ServerSideLauncher(launcher.BaseLauncher):
         print(f"111 enrich_runtime: runtime.spec={runtime.spec}")
         print(f"111 enrich_runtime: serving_spec={serving_spec}")
         if serving_spec:
+            print(
+                f"111 self._configure_serving_spec(client_version={client_version}, function={runtime}, "
+                f"project={project}, serving_spec={serving_spec})"
+            )
             serving_spec_volume = self._configure_serving_spec(
                 client_version=client_version,
                 function=runtime,
