@@ -337,7 +337,7 @@ class ServerSideLauncher(launcher.BaseLauncher):
                         compressed_serving_spec
                     ).decode("utf-8")
                 else:
-                    # TODO: remove in 1.10.0.
+                    # TODO: remove in 1.11.0.
                     if (
                         serving_spec_len >= SERVING_SPEC_MAX_LENGTH / 10
                     ):  # 1MB limitation as it were before the zip
