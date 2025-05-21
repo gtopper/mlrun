@@ -307,7 +307,7 @@ class ServerSideLauncher(launcher.BaseLauncher):
     def _configure_serving_spec(
         client_version,
         function,
-        project,
+        project: str,
         serving_spec,
     ):
         serving_spec_volume = None
@@ -449,12 +449,12 @@ class ServerSideLauncher(launcher.BaseLauncher):
         if serving_spec:
             print(
                 f"111 self._configure_serving_spec(client_version={client_version}, function={runtime}, "
-                f"project={project}, serving_spec={serving_spec})"
+                f"project={project.name}, serving_spec={serving_spec})"
             )
             serving_spec_volume = self._configure_serving_spec(
                 client_version=client_version,
                 function=runtime,
-                project=project,
+                project=project.name,
                 serving_spec=serving_spec,
             )
             print(f"111 enrich_runtime: runtime.spec.volumes = {serving_spec_volume}")
