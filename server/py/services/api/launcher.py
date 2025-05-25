@@ -35,6 +35,7 @@ import mlrun.runtimes.utils
 import mlrun.utils
 import mlrun.utils.regex
 from mlrun.model import RunSpec, RunTemplate
+from mlrun.runtimes import KubejobRuntime
 
 import framework.api.utils
 import framework.utils.helpers
@@ -113,6 +114,11 @@ class ServerSideLauncher(launcher.BaseLauncher):
             notifications=notifications,
             state_thresholds=state_thresholds,
         )
+
+        serving_spec_volume = getattr(runtime.spec, "serving_spec_volume", None)
+        if serving_spec_volume is not None and isinstance(runtime, KubejobRuntime):
+            runtime.spec.volumes.append(serving_spec_volume)
+
         self._validate_runtime(runtime, run)
 
         if runtime.verbose:
