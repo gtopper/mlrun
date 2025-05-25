@@ -457,8 +457,12 @@ class ServerSideLauncher(launcher.BaseLauncher):
                 project=project.name,
                 serving_spec=serving_spec,
             )
-            print(f"111 enrich_runtime: runtime.spec.volumes = {serving_spec_volume}")
-            runtime.spec.volumes = runtime.spec.volumes + [serving_spec_volume]
+            if serving_spec_volume:
+                serving_spec_volume = serving_spec_volume["volume"]
+                print(
+                    f"111 enrich_runtime: runtime.spec.volumes = [{serving_spec_volume}]"
+                )
+                runtime.spec.volumes = runtime.spec.volumes + [serving_spec_volume]
 
     def _enrich_full_spec(
         self,
