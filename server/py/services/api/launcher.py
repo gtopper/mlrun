@@ -35,7 +35,6 @@ import mlrun.runtimes.utils
 import mlrun.utils
 import mlrun.utils.regex
 from mlrun.model import RunSpec, RunTemplate
-from mlrun.runtimes.nuclio.function import RemoteRuntime
 
 import framework.api.utils
 import framework.utils.helpers
@@ -462,16 +461,7 @@ class ServerSideLauncher(launcher.BaseLauncher):
                 print(
                     f"111 enrich_runtime: serving_spec_volume = {serving_spec_volume}"
                 )
-                print(f"111 enrich_runtime: runtime = {runtime}")
-                if isinstance(runtime, RemoteRuntime):
-                    runtime.serving_spec_volume = serving_spec_volume
-                else:
-                    mlrun.utils.update_in(
-                        runtime.spec, "spec.volumes", serving_spec_volume, append=True
-                    )
-                    print(
-                        f"111 enrich_runtime: runtime is NOT a RemoteRuntime. Modified runtime = {runtime}"
-                    )
+                runtime.serving_spec_volume = serving_spec_volume
 
     def _enrich_full_spec(
         self,

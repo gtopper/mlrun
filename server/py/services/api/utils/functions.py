@@ -104,7 +104,7 @@ def build_function(
                 os.remove(str(log_file))
 
             print(f"111 build_function: fn.spec={fn.spec}")
-            serving_spec_volume = getattr(fn.spec, "serving_spec_volume")
+            serving_spec_volume = getattr(fn.spec, "serving_spec_volume", None)
             if serving_spec_volume is not None:
                 fn.spec.volumes.append(serving_spec_volume)
 
