@@ -169,6 +169,9 @@ class ServerSideLauncher(launcher.BaseLauncher):
                 runtime_handler = services.api.runtime_handlers.get_runtime_handler(
                     runtime.kind
                 )
+                print(
+                    f"111 runtime_handler.run(runtime={runtime}, run={run}, execution={execution})"
+                )
                 runtime_handler.run(runtime, run, execution)
             except mlrun.runtimes.utils.RunError as err:
                 last_err = err
