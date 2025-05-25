@@ -538,7 +538,7 @@ def _deploy_function(
             fn,
         )
 
-        serving_spec_volume = getattr(fn.spec, "serving_spec_volume")
+        serving_spec_volume = getattr(fn.spec, "serving_spec_volume", None)
         if serving_spec_volume is not None:
             mlrun.utils.update_in(
                 config, "spec.volumes", serving_spec_volume, append=True
