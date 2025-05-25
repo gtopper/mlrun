@@ -464,15 +464,7 @@ class ServerSideLauncher(launcher.BaseLauncher):
                 )
                 print(f"111 enrich_runtime: runtime = {runtime}")
                 if isinstance(runtime, RemoteRuntime):
-                    mlrun.utils.update_in(
-                        runtime.spec.base_spec,
-                        "spec.volumes",
-                        serving_spec_volume,
-                        append=True,
-                    )
-                    print(
-                        f"111 enrich_runtime: runtime is a RemoteRuntime. Modified runtime = {runtime}"
-                    )
+                    runtime.serving_spec_volume = serving_spec_volume
                 else:
                     mlrun.utils.update_in(
                         runtime.spec, "spec.volumes", serving_spec_volume, append=True
