@@ -538,12 +538,6 @@ def _deploy_function(
             fn,
         )
 
-        serving_spec_volume = getattr(fn.spec, "serving_spec_volume", None)
-        if serving_spec_volume is not None:
-            mlrun.utils.update_in(
-                config, "spec.volumes", serving_spec_volume, append=True
-            )
-
         # after deploying the function, we need to re-mask the sensitive data again and save to the db
         fn.mask_sensitive_data_in_config()
         fn.save(versioned=False)
