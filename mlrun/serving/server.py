@@ -32,6 +32,7 @@ import mlrun.common.constants
 import mlrun.common.helpers
 import mlrun.model_monitoring
 import mlrun.utils
+from mlrun.artifacts import DatasetArtifact
 from mlrun.config import config
 from mlrun.errors import err_to_str
 from mlrun.secrets import SecretsStore
@@ -412,7 +413,7 @@ def v2_serving_init(context, namespace=None):
 
 async def async_execute_graph(
     context,
-    data,  # TODO: cannot annotated with : DatasetArtifact due to cyclic imports.
+    data: DatasetArtifact,
     namespace=None,
 ) -> (list[Any], Any):
     spec = mlrun.utils.get_serving_spec()
