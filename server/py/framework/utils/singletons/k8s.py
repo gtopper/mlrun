@@ -757,10 +757,6 @@ class K8sHelper(mlsecrets.SecretProviderInterface):
         labels[label_name] = resource_name
         labels[mlrun_constants.MLRunInternalLabels.project] = project
 
-        # TODO: resource_name ends up containing the spec
-        print(
-            f"111 ensure_configmap: configmap_with_label = self.get_configmap({resource_name}, {namespace})"
-        )
         configmap_with_label = self.get_configmap(resource_name, namespace)
         if configmap_with_label:
             configmap_name = configmap_with_label.metadata.name
