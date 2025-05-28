@@ -36,6 +36,7 @@ from mlrun.config import config
 from mlrun.errors import err_to_str
 from mlrun.secrets import SecretsStore
 
+from .. import MLClientCtx
 from ..common.helpers import parse_versioned_object_uri
 from ..common.schemas.model_monitoring.constants import FileTargetKind
 from ..datastore import get_stream_pusher
@@ -407,7 +408,7 @@ def v2_serving_init(context, namespace=None):
 
 
 async def async_execute_graph(
-    context,
+    context: MLClientCtx,
     inputs,  # TODO: rename parameter. Also TODO: cannot annotated with : DatasetArtifact due to cyclic imports.
     namespace=None,
 ) -> (list[Any], Any):
@@ -423,8 +424,8 @@ async def async_execute_graph(
     if hasattr(context, "is_mock"):
         kwargs["is_mock"] = context.is_mock
     server.init_states(
-        context,
-        namespace or get_caller_globals(),
+        context=None,  # this context is expected to be a nuclio context, which we don't have in this flow
+        namespace=namespace or get_caller_globals(),
         **kwargs,
     )
     context.logger.info("Initializing graph steps")
