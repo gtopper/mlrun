@@ -119,7 +119,7 @@ class ServerSideLauncher(launcher.BaseLauncher):
         print(f"111 launch: serving_spec_volume = {serving_spec_volume}")
         print(f"111 launch: runtime = {runtime}")
         if serving_spec_volume is not None and isinstance(runtime, KubejobRuntime):
-            runtime.spec.volumes = runtime.spec.volumes + [serving_spec_volume]
+            runtime.spec.volumes = runtime.spec.volumes + [serving_spec_volume["volume"]]
             print(f"111 launch: runtime changed to: {runtime}")
 
         self._validate_runtime(runtime, run)
