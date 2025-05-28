@@ -116,8 +116,11 @@ class ServerSideLauncher(launcher.BaseLauncher):
         )
 
         serving_spec_volume = getattr(runtime.spec, "serving_spec_volume", None)
+        print(f"111 launch: serving_spec_volume = {serving_spec_volume}")
+        print(f"111 launch: runtime = {runtime}")
         if serving_spec_volume is not None and isinstance(runtime, KubejobRuntime):
             runtime.spec.volumes.append(serving_spec_volume)
+            print(f"111 launch: runtime changed to: {runtime}")
 
         self._validate_runtime(runtime, run)
 
@@ -153,6 +156,8 @@ class ServerSideLauncher(launcher.BaseLauncher):
         # post verifications, store execution in db and run pre run hooks
         execution.store_run()
         runtime._pre_run(run, execution)  # hook for runtime specific prep
+
+        print(f"111 launch: runtime after _pre_run: {runtime}")
 
         last_err = None
         # If the runtime is nested, it means the hyper-run will run within a single instance of the run.
