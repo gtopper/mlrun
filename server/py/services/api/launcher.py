@@ -462,7 +462,7 @@ class ServerSideLauncher(launcher.BaseLauncher):
                 runtime.kind
             ]
 
-        serving_spec = getattr(runtime, "serving_spec")
+        serving_spec = getattr(runtime, "serving_spec", None)
         print(f"111 enrich_runtime: runtime.spec={runtime.spec}")
         print(f"111 enrich_runtime: serving_spec={serving_spec}")
         if serving_spec:

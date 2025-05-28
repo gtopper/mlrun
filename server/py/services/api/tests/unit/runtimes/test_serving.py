@@ -29,6 +29,7 @@ from sqlalchemy.orm import Session
 import mlrun.config
 from mlrun import mlconf, new_function
 from mlrun.runtimes.nuclio.function import NuclioStatus
+from server.py.services.api.launcher import SERVING_SPEC_MAX_LENGTH
 
 import framework.api.utils
 import services.api.crud
@@ -429,8 +430,6 @@ class TestServingRuntime(TestNuclioRuntime):
         function._get_serving_spec = unittest.mock.Mock()
 
         # Mock a serving spec that is too large
-        function._get_serving_spec.return_value = (
-            "x" * services.api.crud.runtimes.nuclio.function.SERVING_SPEC_MAX_LENGTH
-        )
+        function._get_serving_spec.return_value = "x" * SERVING_SPEC_MAX_LENGTH
         with pytest.raises(mlrun.errors.MLRunInvalidArgumentError):
             function.deploy(verbose=True)
