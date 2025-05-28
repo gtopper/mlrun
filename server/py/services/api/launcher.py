@@ -115,7 +115,7 @@ class ServerSideLauncher(launcher.BaseLauncher):
             state_thresholds=state_thresholds,
         )
 
-        serving_spec_volume = getattr(runtime.spec, "serving_spec_volume", None)
+        serving_spec_volume = getattr(runtime, "serving_spec_volume", None)
         print(f"111 launch: serving_spec_volume = {serving_spec_volume}")
         print(f"111 launch: runtime = {runtime}")
         if serving_spec_volume is not None and isinstance(runtime, KubejobRuntime):
