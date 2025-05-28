@@ -537,7 +537,6 @@ def _deploy_function(
             db_session,
             fn,
         )
-
         # after deploying the function, we need to re-mask the sensitive data again and save to the db
         fn.mask_sensitive_data_in_config()
         fn.save(versioned=False)
