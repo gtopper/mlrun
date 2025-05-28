@@ -443,7 +443,7 @@ async def async_execute_graph(
 
     responses = []
     for index, row in df.iterrows():
-        event = storey.Event(body=row.to_dict())
+        event = storey.Event(id=index, body=row.to_dict())
         response = await server.run(event, context)
         responses.append(response)
 
