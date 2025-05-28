@@ -445,7 +445,7 @@ async def async_execute_graph(
     for index, row in df.iterrows():
         event = storey.Event(body=row.to_dict())
         response = await server.run(event, context)
-        responses.append(response.body)
+        responses.append(response)
 
     termination_result = server.wait_for_completion()
     if asyncio.iscoroutine(termination_result):
