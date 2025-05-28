@@ -693,7 +693,7 @@ class ServingRuntime(RemoteRuntime):
             force_build=force_build,
         )
 
-    def _get_serving_spec(self, as_json=True):
+    def _get_serving_spec(self):
         function_name_uri_map = {f.name: f.uri(self) for f in self.spec.function_refs}
         serving_spec = {
             "function_name": self.metadata.name,
@@ -717,10 +717,7 @@ class ServingRuntime(RemoteRuntime):
             self._secrets = SecretsStore.from_list(self.spec.secret_sources)
             serving_spec["secret_sources"] = self._secrets.to_serial()
 
-        if as_json:
-            return json.dumps(serving_spec)
-
-        return serving_spec
+        return json.dumps(serving_spec)
 
     @property
     def serving_spec(self):
@@ -825,7 +822,7 @@ class ServingRuntime(RemoteRuntime):
     def to_job(self, target_mapping: Optional[dict] = None) -> KubejobRuntime:
         job = KubejobRuntime(
             spec=KubeResourceSpec(
-                serving_spec=self._get_serving_spec(as_json=True),
+                serving_spec=self._get_serving_spec(),
                 default_handler="mlrun.serving.server.execute_graph",
             ),
             metadata=self.metadata,
