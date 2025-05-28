@@ -36,7 +36,6 @@ from mlrun.config import config
 from mlrun.errors import err_to_str
 from mlrun.secrets import SecretsStore
 
-from .. import MLClientCtx
 from ..common.helpers import parse_versioned_object_uri
 from ..common.schemas.model_monitoring.constants import FileTargetKind
 from ..datastore import get_stream_pusher
@@ -408,7 +407,7 @@ def v2_serving_init(context, namespace=None):
 
 
 async def async_execute_graph(
-    context: MLClientCtx,
+    context,
     inputs,  # TODO: rename parameter. Also TODO: cannot annotated with : DatasetArtifact due to cyclic imports.
     namespace=None,
 ) -> (list[Any], Any):
