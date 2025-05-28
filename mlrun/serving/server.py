@@ -412,7 +412,7 @@ def v2_serving_init(context, namespace=None):
 
 async def async_execute_graph(
     context,
-    inputs,  # TODO: rename parameter. Also TODO: cannot annotated with : DatasetArtifact due to cyclic imports.
+    data,  # TODO: cannot annotated with : DatasetArtifact due to cyclic imports.
     namespace=None,
 ) -> (list[Any], Any):
     spec = mlrun.utils.get_serving_spec()
@@ -439,7 +439,7 @@ async def async_execute_graph(
     if server.verbose:
         context.logger.info(server.to_yaml())
 
-    df = inputs.as_df()
+    df = data.as_df()
 
     responses = []
     for index, row in df.iterrows():
@@ -454,11 +454,9 @@ async def async_execute_graph(
     return responses, termination_result
 
 
-def execute_graph(context, inputs, namespace=None) -> (list[Any], Any):
-    print(
-        f"111 execute_graph(context={context}, inputs={inputs}, namespace={namespace})"
-    )
-    return asyncio.run(async_execute_graph(context, inputs, namespace=namespace))
+def execute_graph(context, data, namespace=None) -> (list[Any], Any):
+    print(f"111 execute_graph(context={context}, data={data}, namespace={namespace})")
+    return asyncio.run(async_execute_graph(context, data, namespace=namespace))
 
 
 def _set_callbacks(server, context):
