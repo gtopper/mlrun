@@ -315,7 +315,11 @@ class GraphServer(ModelObj):
 
     def _process_response(self, context, response, get_body):
         body = response.body
-        if isinstance(body, context.Response) or get_body:
+        if (
+            not hasattr(context, "Response")
+            or isinstance(body, context.Response)
+            or get_body
+        ):
             return body
 
         if body and not isinstance(body, (str, bytes)):
