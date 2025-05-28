@@ -451,6 +451,9 @@ async def async_execute_graph(
 
 
 def execute_graph(context, inputs, namespace=None) -> (list[Any], Any):
+    print(
+        f"111 execute_graph(context={context}, inputs={inputs}, namespace={namespace})"
+    )
     return asyncio.run(async_execute_graph(context, inputs, namespace=namespace))
 
 
