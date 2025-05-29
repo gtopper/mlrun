@@ -115,17 +115,7 @@ class ServerSideLauncher(launcher.BaseLauncher):
             state_thresholds=state_thresholds,
         )
 
-        serving_spec_volume = getattr(runtime, "serving_spec_volume", None)
-        print(f"111 launch: serving_spec_volume = {serving_spec_volume}")
         print(f"111 launch: runtime = {runtime}")
-        if serving_spec_volume is not None and isinstance(runtime, KubejobRuntime):
-            runtime.spec.volumes = runtime.spec.volumes + [
-                serving_spec_volume["volume"]
-            ]
-            runtime.spec.volume_mounts = runtime.spec.volume_mounts + [
-                serving_spec_volume["volumeMount"]
-            ]
-            print(f"111 launch: runtime changed to: {runtime}")
 
         self._validate_runtime(runtime, run)
 
@@ -476,11 +466,16 @@ class ServerSideLauncher(launcher.BaseLauncher):
                 project=project.name,
                 serving_spec=serving_spec,
             )
-            if serving_spec_volume:
+            if serving_spec_volume and isinstance(runtime, KubejobRuntime):
                 print(
                     f"111 enrich_runtime: serving_spec_volume = {serving_spec_volume}"
                 )
-                runtime.serving_spec_volume = serving_spec_volume
+                runtime.spec.volumes = runtime.spec.volumes + [
+                    serving_spec_volume["volume"]
+                ]
+                runtime.spec.volume_mounts = runtime.spec.volume_mounts + [
+                    serving_spec_volume["volumeMount"]
+                ]
 
     def _enrich_full_spec(
         self,

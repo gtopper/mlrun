@@ -362,10 +362,6 @@ def _compile_function_config(
 
     function_name = _set_function_name(function, config, project, tag)
 
-    serving_spec_volume = getattr(function, "serving_spec_volume", None)
-    if serving_spec_volume is not None:
-        mlrun.utils.update_in(config, "spec.volumes", serving_spec_volume, append=True)
-
     return function_name, project, config
 
 
