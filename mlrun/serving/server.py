@@ -455,9 +455,7 @@ async def async_execute_graph(
     return responses, termination_result
 
 
-def execute_graph(
-    context: MLClientCtx, data: DataItem, namespace=None
-) -> (list[Any], Any):
+def execute_graph(context: MLClientCtx, data, namespace=None) -> (list[Any], Any):
     print(f"111 execute_graph(context={context}, data={data}, namespace={namespace})")
     return asyncio.run(async_execute_graph(context, data, namespace=namespace))
 
