@@ -37,12 +37,12 @@ from mlrun.config import config
 from mlrun.errors import err_to_str
 from mlrun.secrets import SecretsStore
 
-from .. import MLClientCtx
 from ..common.helpers import parse_versioned_object_uri
 from ..common.schemas.model_monitoring.constants import FileTargetKind
 from ..datastore import get_stream_pusher
 from ..datastore.store_resources import ResourceCache
 from ..errors import MLRunInvalidArgumentError
+from ..execution import MLClientCtx
 from ..model import ModelObj
 from ..utils import get_caller_globals
 from .states import RootFlowStep, RouterStep, get_function, graph_root_setter
