@@ -32,11 +32,11 @@ import mlrun.common.constants
 import mlrun.common.helpers
 import mlrun.model_monitoring
 import mlrun.utils
-from mlrun.artifacts import DatasetArtifact
 from mlrun.config import config
 from mlrun.errors import err_to_str
 from mlrun.secrets import SecretsStore
 
+from .. import DataItem
 from ..common.helpers import parse_versioned_object_uri
 from ..common.schemas.model_monitoring.constants import FileTargetKind
 from ..datastore import get_stream_pusher
@@ -414,7 +414,7 @@ def v2_serving_init(context, namespace=None):
 
 async def async_execute_graph(
     context: MLClientCtx,
-    data: DatasetArtifact,
+    data: DataItem,
     namespace=None,
 ) -> (list[Any], Any):
     spec = mlrun.utils.get_serving_spec()
@@ -457,7 +457,7 @@ async def async_execute_graph(
 
 
 def execute_graph(
-    context: MLClientCtx, data: DatasetArtifact, namespace=None
+    context: MLClientCtx, data: DataItem, namespace=None
 ) -> (list[Any], Any):
     print(f"111 execute_graph(context={context}, data={data}, namespace={namespace})")
     return asyncio.run(async_execute_graph(context, data, namespace=namespace))
