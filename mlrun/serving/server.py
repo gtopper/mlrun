@@ -414,7 +414,8 @@ def v2_serving_init(context, namespace=None):
 async def async_execute_graph(
     context: MLClientCtx,
     data: DataItem,
-    namespace=None,
+    batching: bool,
+    batch_size: Optional[int],
 ) -> (list[Any], Any):
     spec = mlrun.utils.get_serving_spec()
     server = GraphServer.from_dict(spec)
@@ -456,10 +457,15 @@ async def async_execute_graph(
 
 
 def execute_graph(
-    context: MLClientCtx, data: DataItem, namespace=None
+    context: MLClientCtx,
+    data: DataItem,
+    batching: bool = False,
+    batch_size: Optional[int] = None,
 ) -> (list[Any], Any):
-    print(f"111 execute_graph(context={context}, data={data}, namespace={namespace})")
-    return asyncio.run(async_execute_graph(context, data, namespace=namespace))
+    print(
+        f"111 execute_graph(context={context}, data={data}, batching={batching}, batch_size={batch_size})"
+    )
+    return asyncio.run(async_execute_graph(context, data, batching, batch_size))
 
 
 def _set_callbacks(server, context):
