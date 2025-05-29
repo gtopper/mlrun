@@ -38,7 +38,7 @@ from mlrun.secrets import SecretsStore
 
 from ..common.helpers import parse_versioned_object_uri
 from ..common.schemas.model_monitoring.constants import FileTargetKind
-from ..datastore import get_stream_pusher
+from ..datastore import DataItem, get_stream_pusher
 from ..datastore.store_resources import ResourceCache
 from ..errors import MLRunInvalidArgumentError
 from ..execution import MLClientCtx
@@ -413,7 +413,7 @@ def v2_serving_init(context, namespace=None):
 
 async def async_execute_graph(
     context: MLClientCtx,
-    data,
+    data: DataItem,
     namespace=None,
 ) -> (list[Any], Any):
     spec = mlrun.utils.get_serving_spec()
@@ -455,7 +455,9 @@ async def async_execute_graph(
     return responses, termination_result
 
 
-def execute_graph(context: MLClientCtx, data, namespace=None) -> (list[Any], Any):
+def execute_graph(
+    context: MLClientCtx, data: DataItem, namespace=None
+) -> (list[Any], Any):
     print(f"111 execute_graph(context={context}, data={data}, namespace={namespace})")
     return asyncio.run(async_execute_graph(context, data, namespace=namespace))
 
