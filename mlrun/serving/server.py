@@ -36,7 +36,6 @@ from mlrun.config import config
 from mlrun.errors import err_to_str
 from mlrun.secrets import SecretsStore
 
-from .. import DataItem
 from ..common.helpers import parse_versioned_object_uri
 from ..common.schemas.model_monitoring.constants import FileTargetKind
 from ..datastore import get_stream_pusher
@@ -414,7 +413,7 @@ def v2_serving_init(context, namespace=None):
 
 async def async_execute_graph(
     context: MLClientCtx,
-    data: DataItem,
+    data,
     namespace=None,
 ) -> (list[Any], Any):
     spec = mlrun.utils.get_serving_spec()
