@@ -327,10 +327,7 @@ class ServerSideLauncher(launcher.BaseLauncher):
             if serving_spec_len >= mlrun.mlconf.httpdb.nuclio.serving_spec_env_cutoff:
                 if serving_spec_len >= SERVING_SPEC_MAX_LENGTH:
                     raise mlrun.errors.MLRunInvalidArgumentError(
-                        f"The serving spec length exceeds the limit of {SERVING_SPEC_MAX_LENGTH}. "
-                        + "Run `mlrun.runtimes.nuclio.serving.ServingRuntime._get_serving_spec`, delete a large field "
-                        + "in the returned json, and check if the function runs successfully. "
-                        + "Repeat as necessary to get the spec to an allowed size"
+                        f"The serving spec length exceeds the limit of {SERVING_SPEC_MAX_LENGTH}."
                     )
                 if (
                     not client_version
@@ -351,10 +348,7 @@ class ServerSideLauncher(launcher.BaseLauncher):
                         serving_spec_len >= SERVING_SPEC_MAX_LENGTH / 10
                     ):  # 1MB limitation as it were before the zip
                         raise mlrun.errors.MLRunInvalidArgumentError(
-                            f"The serving spec length exceeds the limit of {SERVING_SPEC_MAX_LENGTH}. "
-                            "Run `mlrun.runtimes.nuclio.serving.ServingRuntime._get_serving_spec`, delete a large "
-                            "field in the returned json, and check if the function runs successfully. "
-                            "Repeat as necessary to get the spec to an allowed size"
+                            f"The serving spec length exceeds the limit of {SERVING_SPEC_MAX_LENGTH}."
                         )
                     mlrun.utils.logger.info(
                         "Client version does not support passing serving spec as zip via ConfigMap",
