@@ -316,14 +316,6 @@ def _compile_function_config(
             config = nuclio.config.new_config()
             mlrun.utils.update_in(config, "spec.handler", handler or "main:handler")
 
-        print(
-            f"111 _compile_function_config: nuclio.config.extend_config(\n"
-            f"config={config},\n"
-            f"nuclio_spec={nuclio_spec},\n"
-            f"tag={tag},\n"
-            f"function.spec.build.code_origin={function.spec.build.code_origin}\n"
-            f")"
-        )
         config = nuclio.config.extend_config(
             config, nuclio_spec, tag, function.spec.build.code_origin
         )

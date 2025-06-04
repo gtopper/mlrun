@@ -618,7 +618,6 @@ def _deploy_nuclio_runtime(
                     f"client version must be >= {MINIMUM_CLIENT_VERSION_FOR_MM}",
                 )
 
-    print(f"111 _deploy_nuclio_runtime: fn = {fn}")
     services.api.crud.runtimes.nuclio.function.deploy_nuclio_function(
         fn,
         auth_info=auth_info,

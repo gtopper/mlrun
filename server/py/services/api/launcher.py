@@ -115,8 +115,6 @@ class ServerSideLauncher(launcher.BaseLauncher):
             state_thresholds=state_thresholds,
         )
 
-        print(f"111 launch: runtime = {runtime}")
-
         self._validate_runtime(runtime, run)
 
         if runtime.verbose:
@@ -152,8 +150,6 @@ class ServerSideLauncher(launcher.BaseLauncher):
         execution.store_run()
         runtime._pre_run(run, execution)  # hook for runtime specific prep
 
-        print(f"111 launch: runtime after _pre_run: {runtime}")
-
         last_err = None
         # If the runtime is nested, it means the hyper-run will run within a single instance of the run.
         # So while in the API, we consider the hyper-run as a single run, and then in the runtime itself when the
@@ -174,9 +170,6 @@ class ServerSideLauncher(launcher.BaseLauncher):
             try:
                 runtime_handler = services.api.runtime_handlers.get_runtime_handler(
                     runtime.kind
-                )
-                print(
-                    f"111 runtime_handler.run(runtime={runtime}, run={run}, execution={execution})"
                 )
                 runtime_handler.run(runtime, run, execution)
             except mlrun.runtimes.utils.RunError as err:
@@ -359,11 +352,6 @@ class ServerSideLauncher(launcher.BaseLauncher):
                 function_name = mlrun.runtimes.nuclio.function.get_fullname(
                     function.metadata.name, project, function.metadata.tag
                 )
-                print(
-                    "111 _configure_serving_spec: mlrun.runtimes.nuclio.function.get_fullname("
-                    f"{function.metadata.name}, {project}, {function.metadata.tag})"
-                )
-                print(f"111 _configure_serving_spec: function_name={function_name}")
                 k8s_helper = framework.utils.singletons.k8s.get_k8s_helper()
                 confmap_name = k8s_helper.ensure_configmap(
                     mlrun.common.constants.MLRUN_SERVING_CONF,
@@ -447,13 +435,7 @@ class ServerSideLauncher(launcher.BaseLauncher):
             ]
 
         serving_spec = getattr(runtime, "serving_spec", None)
-        print(f"111 enrich_runtime: runtime.spec={runtime.spec}")
-        print(f"111 enrich_runtime: serving_spec={serving_spec}")
         if serving_spec:
-            print(
-                f"111 self._configure_serving_spec(client_version={client_version}, function={runtime}, "
-                f"project={project.name}, serving_spec={serving_spec})"
-            )
             serving_spec_volume = self._configure_serving_spec(
                 client_version=client_version,
                 function=runtime,
@@ -461,9 +443,6 @@ class ServerSideLauncher(launcher.BaseLauncher):
                 serving_spec=serving_spec,
             )
             if serving_spec_volume and isinstance(runtime, KubejobRuntime):
-                print(
-                    f"111 enrich_runtime: serving_spec_volume = {serving_spec_volume}"
-                )
                 runtime.spec.volumes = runtime.spec.volumes + [
                     serving_spec_volume["volume"]
                 ]
