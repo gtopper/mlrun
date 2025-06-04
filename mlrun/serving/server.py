@@ -422,19 +422,17 @@ async def async_execute_graph(
 
     if config.log_level.lower() == "debug":
         server.verbose = True
-    context.logger.info_with(
-        "Initializing states", namespace=namespace or get_caller_globals()
-    )
+    context.logger.info_with("Initializing states", namespace=get_caller_globals())
     kwargs = {}
     if hasattr(context, "is_mock"):
         kwargs["is_mock"] = context.is_mock
     server.init_states(
         context=None,  # this context is expected to be a nuclio context, which we don't have in this flow
-        namespace=namespace or get_caller_globals(),
+        namespace=get_caller_globals(),
         **kwargs,
     )
     context.logger.info("Initializing graph steps")
-    server.init_object(namespace or get_caller_globals())
+    server.init_object(get_caller_globals())
 
     context.logger.info_with("Graph was initialized", verbose=server.verbose)
 
