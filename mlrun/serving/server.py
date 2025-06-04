@@ -444,10 +444,22 @@ async def async_execute_graph(
     df = data.as_df()
 
     responses = []
-    for index, row in df.iterrows():
-        event = storey.Event(id=index, body=row.to_dict())
+
+    async def run(body):
+        event = storey.Event(id=index, body=body)
         response = await server.run(event, context)
         responses.append(response)
+
+    batch = []
+    for index, row in df.iterrows():
+        data = row.to_dict()
+        if batching:
+            batch.append(data)
+            if batch_size and len(batch) == batch_size:
+                await run(batch)
+                batch = []
+        else:
+            await run(data)
 
     termination_result = server.wait_for_completion()
     if asyncio.iscoroutine(termination_result):
