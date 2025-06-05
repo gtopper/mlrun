@@ -472,9 +472,6 @@ def execute_graph(
     batching: bool = False,
     batch_size: Optional[int] = None,
 ) -> (list[Any], Any):
-    print(
-        f"111 execute_graph(context={context}, data={data}, batching={batching}, batch_size={batch_size})"
-    )
     return asyncio.run(async_execute_graph(context, data, batching, batch_size))
 
 
