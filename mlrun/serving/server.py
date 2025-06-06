@@ -418,21 +418,28 @@ async def async_execute_graph(
     batch_size: Optional[int],
 ) -> (list[Any], Any):
     spec = mlrun.utils.get_serving_spec()
+
+    source_filename = spec.get("filename", None)
+    namespace = {}
+    if source_filename:
+        with open(source_filename) as f:
+            exec(f.read(), namespace)
+
     server = GraphServer.from_dict(spec)
 
     if config.log_level.lower() == "debug":
         server.verbose = True
-    context.logger.info_with("Initializing states", namespace=get_caller_globals())
+    context.logger.info_with("Initializing states", namespace=namespace)
     kwargs = {}
     if hasattr(context, "is_mock"):
         kwargs["is_mock"] = context.is_mock
     server.init_states(
         context=None,  # this context is expected to be a nuclio context, which we don't have in this flow
-        namespace=get_caller_globals(),
+        namespace=namespace,
         **kwargs,
     )
     context.logger.info("Initializing graph steps")
-    server.init_object(get_caller_globals())
+    server.init_object(namespace)
 
     context.logger.info_with("Graph was initialized", verbose=server.verbose)
 
@@ -448,12 +455,15 @@ async def async_execute_graph(
         response = await server.run(event, context)
         responses.append(response)
 
+    if batching and not batch_size:
+        batch_size = len(df)
+
     batch = []
     for index, row in df.iterrows():
         data = row.to_dict()
         if batching:
             batch.append(data)
-            if batch_size and len(batch) == batch_size:
+            if len(batch) == batch_size:
                 await run(batch)
                 batch = []
         else:

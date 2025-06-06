@@ -713,6 +713,7 @@ class ServingRuntime(RemoteRuntime):
             "track_models": self.spec.track_models,
             "default_content_type": self.spec.default_content_type,
             "model_endpoint_creation_task_name": self.spec.model_endpoint_creation_task_name,
+            "filename": getattr(self.spec, "filename"),
         }
 
         if self.spec.secret_sources:
@@ -822,11 +823,12 @@ class ServingRuntime(RemoteRuntime):
         self._mock_server = self.to_mock_server()
 
     def to_job(self, target_mapping: Optional[dict] = None) -> KubejobRuntime:
+        spec = KubeResourceSpec(
+            serving_spec=self._get_serving_spec(),
+            default_handler="mlrun.serving.server.execute_graph",
+        )
         job = KubejobRuntime(
-            spec=KubeResourceSpec(
-                serving_spec=self._get_serving_spec(),
-                default_handler="mlrun.serving.server.execute_graph",
-            ),
+            spec=spec,
             metadata=self.metadata,
         )
         return job
