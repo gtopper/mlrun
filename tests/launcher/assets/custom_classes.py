@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 class SepalLengthIncreaser:
     def do(self, event):
         event_is_list = isinstance(event, list)

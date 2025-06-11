@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 def func(context, x, **kwargs):
     context.logger.info(x)
     context.logger.info(kwargs)
