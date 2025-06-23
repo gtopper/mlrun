@@ -709,6 +709,8 @@ class ServingRuntime(RemoteRuntime):
             self._secrets = SecretsStore.from_list(self.spec.secret_sources)
             serving_spec["secret_sources"] = self._secrets.to_serial()
 
+        print(f"111 _get_serving_spec: serving_spec={serving_spec}")
+
         return json.dumps(serving_spec)
 
     def to_mock_server(
