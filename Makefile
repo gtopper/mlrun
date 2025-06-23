@@ -81,7 +81,7 @@ PRINT_COVERAGE_REPORT = if [ "$(RUN_COVERAGE)" = "true" ]; then \
 	fi
 
 # Verify the mount point to avoid deleting essential paths
-SETUP_COVERAGE_MOUNTING = if [ "$(RUN_COVERAGE)" = "true" ]; then \
+SETUP_COVERAGE_MOUNTING = if [[ "$(RUN_COVERAGE)" == "true" ]]; then \
 		case "$$COVERAGE_MOUNT_PATH" in /tmp/coverage_reports/*) \
 			rm -rf $$COVERAGE_MOUNT_PATH && \
 			mkdir -p $$COVERAGE_MOUNT_PATH; \
@@ -134,11 +134,6 @@ endif
 
 # Change to `--upgrade-package <package-name>` to upgrade only a specific package
 MLRUN_UV_UPGRADE_FLAG ?= --upgrade
-
-# absolute path to this Makefile
-THIS_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
-# its directory
-ROOT_DIR       := $(dir   $(THIS_MAKEFILE))
 
 .PHONY: help
 help: ## Display available commands
@@ -554,7 +549,7 @@ test-publish: package-wheel ## Test python package publishing
 .PHONY: clean
 clean: ## Clean python package build artifacts
 	rm -rf build dist mlrun.egg-info
-	find . -type f -name '*.pyc' ! -path './venv/*' -delete
+	find . -name '*.pyc' -not -path "./venv" -exec rm {} \;
 
 .PHONY: test-dockerized
 test-dockerized: build-test ## Run mlrun tests in docker container
@@ -660,21 +655,16 @@ test-migrations-dockerized: build-test ## Run mlrun db migrations tests in docke
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-e RUN_COVERAGE=$(RUN_COVERAGE) \
 		-v $$COVERAGE_MOUNT_PATH:/mlrun/tests/coverage_reports \
-		$(MLRUN_TEST_IMAGE_NAME_TAGGED) make RUN_COVERAGE=true test-migrations
+		$(MLRUN_TEST_IMAGE_NAME_TAGGED) make test-migrations
 
 .PHONY: test-migrations
 test-migrations: clean ## Run mlrun db migrations tests
-	set -xe; \
 	COVERAGE_FILE=$(COVERAGE_FILE) && \
 	COVERAGE_FILE=$${COVERAGE_FILE:-"tests/coverage_reports/migration_tests.coverage"} && \
 	$(SETUP_COVERAGE) && \
-	python -u $(COVERAGE_ADDITION) -m pytest -vvv \
-	  --capture=no \
-	  --disable-warnings \
-	  --durations=100 \
-	  -rf "${ROOT_DIR}/server/py/services/api/migrations/tests" \
-	  2>&1 | tee migration_tests.log; \
-	$(PRINT_COVERAGE_REPORT)
+	COVERAGE_ADDITION="$(COVERAGE_ADDITION)" ./automation/scripts/test_migration_mysql.sh && \
+	$(PRINT_COVERAGE_REPORT) ;
+
 
 .PHONY: test-system-dockerized
 test-system-dockerized: build-test-system ## Run mlrun system tests in docker container
@@ -990,7 +980,7 @@ upgrade-mlrun-test-deps-lock: verify-uv-version ## Upgrade mlrun test locked req
 		requirements.txt \
 		extras-requirements.txt \
 		dockerfiles/mlrun-api/requirements.txt \
-		dockerfiles/test/requirements.txt \
+		dockerfiles/mlrun-kfp/requirements.txt \
 		dev-requirements.txt \
 		$(MLRUN_UV_UPGRADE_FLAG) \
 		--output-file dockerfiles/test/locked-requirements.txt

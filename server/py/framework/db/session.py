@@ -15,12 +15,11 @@
 from sqlalchemy.orm import Session
 
 import mlrun.utils.helpers
-
-import framework.db.sqldb.sql_session
+from mlrun.common.db.sql_session import create_session as sqldb_create_session
 
 
 def create_session() -> Session:
-    return framework.db.sqldb.sql_session.create_session()
+    return sqldb_create_session()
 
 
 def close_session(db_session):

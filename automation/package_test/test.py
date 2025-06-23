@@ -257,9 +257,6 @@ class PackageTester:
         self._run_command(
             "python -m venv test-venv",
         )
-        self._run_command(
-            "python -m pip install -r automation/requirements.txt", run_in_venv=True
-        )
 
     def _clean_venv(self):
         self._logger.debug(

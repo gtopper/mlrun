@@ -22,7 +22,6 @@ import mlrun
 import mlrun.feature_store as fstore
 from mlrun.datastore.sources import SQLSource
 from mlrun.datastore.targets import SQLTarget
-from mlrun.db.sql_types import MicroSecondDateTime
 from mlrun.feature_store.steps import OneHotEncoder
 from tests.system.base import TestMLRunSystem
 
@@ -153,7 +152,7 @@ class TestFeatureStoreSqlDB(TestMLRunSystem):
                 conn,
                 if_exists="replace",
                 index=False,
-                dtype={"time": MicroSecondDateTime()}
+                dtype={"time": db.dialects.mysql.DATETIME(fsp=6)}
                 if source_name == "quotes"
                 else None,
             )
@@ -200,7 +199,7 @@ class TestFeatureStoreSqlDB(TestMLRunSystem):
                 conn,
                 if_exists="replace",
                 index=False,
-                dtype={"time": MicroSecondDateTime()}
+                dtype={"time": db.dialects.mysql.DATETIME(fsp=6)}
                 if source_name == "quotes"
                 else None,
             )
@@ -441,7 +440,7 @@ class TestFeatureStoreSqlDB(TestMLRunSystem):
             elif col_type is datetime.timedelta or col_type is pd.Timedelta:
                 col_type = db.Interval
             elif col_type is datetime.datetime or col_type is pd.Timestamp:
-                col_type = MicroSecondDateTime()
+                col_type = db.dialects.mysql.DATETIME(fsp=6)
             elif col_type is bool:
                 col_type = db.Boolean
             elif col_type is float:

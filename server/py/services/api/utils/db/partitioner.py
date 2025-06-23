@@ -23,7 +23,7 @@ import framework.db.sqldb.db
 import framework.utils.singletons.db
 
 
-class DBPartitioner:
+class MySQLPartitioner:
     def create_and_drop_partitions(
         self,
         session: Session,
@@ -102,9 +102,9 @@ class DBPartitioner:
 
         # Drop partitions that are older than the cutoff
         framework.utils.singletons.db.get_db().drop_partitions(
-            session=session,
-            table_name=table_name,
-            cutoff_partition_name=f"p{cutoff_partition_name}",
+            session,
+            table_name,
+            f"p{cutoff_partition_name}",
         )
 
     @staticmethod
@@ -125,7 +125,7 @@ class DBPartitioner:
             # 1. the table is not partitioned
             # 2. the table doesn't exist
             # to identify the reason, we need to check if the table exists
-            if framework.utils.singletons.db.get_db().table_exists(
+            if framework.utils.singletons.db.get_db().table_exist(
                 session=session, table_name=table_name
             ):
                 reason = "Table is not partitioned"

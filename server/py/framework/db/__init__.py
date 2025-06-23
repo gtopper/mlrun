@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import framework.db
-import framework.db.init_db
+from .init_db import init_db
+from .session import close_session, create_session

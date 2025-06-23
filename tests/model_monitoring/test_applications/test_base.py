@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from collections.abc import Iterator
 from contextlib import AbstractContextManager
 from contextlib import nullcontext as does_not_raise
@@ -433,17 +434,7 @@ class TestToJob:
 
 
 @pytest.mark.parametrize(
-    "endpoints",
-    [
-        "2e312eb7-bbcc-4752-9140-be9e9395fc13",
-        ["2e312eb7-bbcc-4752-9140-be9e9395fc13"],
-        [
-            (
-                "2e312eb7-bbcc-4752-9140-be9e9395fc13",
-                "2e312eb7-bbcc-4752-9140-be9e9395fc13",
-            )
-        ],
-    ],
+    "endpoints", ["model-ep-1", ["model-ep-1"], [("model-ep-1", "model-ep-1-uid")]]
 )
 def test_handle_endpoints_type_evaluate(
     rundb_mock, endpoints: Union[str, list[str], list[tuple]]
@@ -453,9 +444,4 @@ def test_handle_endpoints_type_evaluate(
         project, endpoints
     )
 
-    assert endpoints_output == [
-        (
-            "2e312eb7-bbcc-4752-9140-be9e9395fc13",
-            "2e312eb7-bbcc-4752-9140-be9e9395fc13",
-        )
-    ]
+    assert endpoints_output == [("model-ep-1", "model-ep-1-uid")]
