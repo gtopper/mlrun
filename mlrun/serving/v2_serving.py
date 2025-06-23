@@ -152,6 +152,7 @@ class V2ModelServer(StepToDict):
             self._initialize_model_logger()
 
     def _lazy_init(self, event):
+        print(f"111 V2ModelServer._lazy_init: event={event}")
         if event and isinstance(event, dict) and not self.initialized:
             background_task_state = event.get("background_task_state", None)
             if (
@@ -166,6 +167,9 @@ class V2ModelServer(StepToDict):
                     else None
                 )
                 self.initialized = True
+                print(f"111 V2ModelServer._lazy_init: model_logger initialized")
+            else:
+                print(f"111 V2ModelServer._lazy_init: model_logger NOT initialized")
 
     def get_param(self, key: str, default=None):
         """get param by key (specified in the model or the function)"""
