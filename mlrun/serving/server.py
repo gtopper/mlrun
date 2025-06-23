@@ -371,7 +371,12 @@ def v2_serving_init(context, namespace=None):
 
     context.logger.info("Initializing server from spec")
     spec = mlrun.utils.get_serving_spec()
+    context.logger.info("111 v2_serving_init", spec=spec)
     server = GraphServer.from_dict(spec)
+    context.logger.info(
+        "111 v2_serving_init",
+        server_model_endpoint_creation_task_name=server.model_endpoint_creation_task_name,
+    )
     if isinstance(server.graph, RootFlowStep):
         server.graph = add_system_steps_to_graph(copy.deepcopy(server.graph))
         context.logger.info_with(
