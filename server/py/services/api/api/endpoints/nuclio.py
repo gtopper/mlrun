@@ -30,6 +30,7 @@ import mlrun.common.schemas.model_monitoring.constants as mm_constants
 from mlrun.common.model_monitoring.helpers import parse_model_endpoint_store_prefix
 from mlrun.common.schemas.serving import DeployResponse
 from mlrun.config import config
+from mlrun.runtimes import RuntimeKinds
 from mlrun.utils import logger
 from mlrun.utils.helpers import generate_object_uri
 
@@ -270,7 +271,12 @@ async def deploy_function(
     returned_background_tasks = mlrun.common.schemas.BackgroundTaskList(
         background_tasks=[]
     )
-    if function.get("kind") == mlrun.runtimes.RuntimeKinds.serving:
+    kind = function.get("kind")
+    if (
+        kind == RuntimeKinds.serving
+        or kind == RuntimeKinds.job
+        and function.spec.serving_spec
+    ):
         monitoring_deployment = mm_deployment.MonitoringDeployment(project=project)
         (
             model_endpoints_instructions,

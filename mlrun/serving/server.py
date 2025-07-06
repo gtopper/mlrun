@@ -557,6 +557,27 @@ async def async_execute_graph(
 
     server = GraphServer.from_dict(spec)
 
+    if server.model_endpoint_creation_task_name:
+        context.logger.info(
+            f"Checking the status of model endpoint creation task '{server.model_endpoint_creation_task_name}'"
+        )
+        background_task = (
+            mlrun.get_run_db().wait_for_background_task_to_reach_terminal_state(
+                server.project, server.model_endpoint_creation_task_name
+            )
+        )
+        task_state = background_task.status.state
+        if task_state == mlrun.common.schemas.BackgroundTaskState.failed:
+            raise mlrun.errors.MLRunRuntimeError(
+                "Aborting job due to model endpoint creation background task failure"
+            )
+        elif task_state != mlrun.common.schemas.BackgroundTaskState.succeeded:
+            # this shouldn't happen, but we need to know if it does
+            raise mlrun.errors.MLRunRuntimeError(
+                "Aborting job because the model endpoint creation background task did not succeed "
+                f"(status='{task_state}')"
+            )
+
     if config.log_level.lower() == "debug":
         server.verbose = True
     context.logger.info_with("Initializing states", namespace=namespace)
