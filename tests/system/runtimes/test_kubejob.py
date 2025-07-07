@@ -43,7 +43,7 @@ def exec_cli(args, action="run"):
 class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
     project_name = "kubejob-system-test"
 
-    image: str = "mlrun/mlrun"
+    image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-30f6eb"
 
     @pytest.mark.smoke
     def test_deploy_function(self):
@@ -749,6 +749,8 @@ def print_df(df):
             path=f"v3io:///projects/{self.project_name}/out.parquet",
         )
 
+        function.set_tracking()
+
         job = function.to_job()
 
         with open(str(self.assets_path / "test_data.csv")) as f:
@@ -769,3 +771,7 @@ def print_df(df):
             ), "Extra column was not added by model"
         finally:
             v3io_client.close()
+
+        model_endpoints = mlrun.get_run_db().list_model_endpoints(self.project_name)
+        print(f"model_endpoints={model_endpoints}")
+
