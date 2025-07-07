@@ -28,6 +28,7 @@ import mlrun.feature_store.common
 import mlrun.model
 import tests.system.base
 from mlrun.runtimes.function_reference import FunctionReference
+from mlrun.serving import ModelRunnerStep
 
 
 def exec_cli(args, action="run"):
@@ -42,6 +43,8 @@ def exec_cli(args, action="run"):
 class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
     project_name = "kubejob-system-test"
 
+    image: str = "mlrun/mlrun"
+
     @pytest.mark.smoke
     def test_deploy_function(self):
         code_path = str(self.assets_path / "kubejob_function.py")
@@ -52,7 +55,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
             project=self.project_name,
             filename=code_path,
         )
-        function.build_config(base_image="mlrun/mlrun", commands=["pip install pandas"])
+        function.build_config(base_image=self.image, commands=["pip install pandas"])
 
         self._logger.debug("Deploying kubejob function")
         function.deploy()
@@ -66,7 +69,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
             kind="job",
             project=self.project_name,
             filename=code_path,
-            image="mlrun/mlrun",
+            image=self.image,
             requirements_file=requirements_path,
         )
         function.deploy()
@@ -80,7 +83,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
         # ML-2669
         code_path = str(self.assets_path / "kubejob_function.py")
         expected_spec_image = ".mlrun/func-kubejob-system-test-simple-function:latest"
-        expected_base_image = "mlrun/mlrun"
+        expected_base_image = self.image
 
         function = mlrun.code_to_function(
             name="simple-function",
@@ -152,11 +155,11 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
         # ML-2701
         code_path = str(self.assets_path / "kubejob_function.py")
         expected_spec_image = ".mlrun/func-kubejob-system-test-simple-function:latest"
-        expected_base_image = "mlrun/mlrun"
+        expected_base_image = self.image
         function = mlrun.code_to_function(
             "simple-function",
             kind="job",
-            image="mlrun/mlrun",
+            image=self.image,
             filename=code_path,
             requirements=["pandas"],
         )
@@ -188,7 +191,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
             handler="handler",
             project=self.project_name,
             filename=code_path,
-            image="mlrun/mlrun",
+            image=self.image,
         )
         run = function.run(params={"param1": local_param})
         assert run.status.results["project_param"] == project_param
@@ -206,7 +209,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
             handler="handler",
             project=self.project_name,
             filename=code_path,
-            image="mlrun/mlrun",
+            image=self.image,
         )
         args = ["--some-arg", "a-value-123"]
         function.spec.args = args
@@ -238,7 +241,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
             kind="job",
             project=self.project_name,
             filename=code_path,
-            image="mlrun/mlrun",
+            image=self.image,
         )
         args = ["--some-arg", "a-value-123"]
         function.spec.args = args
@@ -269,7 +272,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
             name="new-function-with-args",
             kind="job",
             project=self.project_name,
-            image="mlrun/mlrun",
+            image=self.image,
             source=art.get_target_path(),
             command="my_code_artifact.py --another-one 123",
         )
@@ -295,7 +298,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
         self.project.set_function(
             train_path,
             name="log-artifact",
-            image="mlrun/mlrun",
+            image=self.image,
             kind="job",
             handler="train",
         )
@@ -322,7 +325,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
             kind="job",
             project=self.project_name,
             filename=code_path,
-            image="mlrun/mlrun",
+            image=self.image,
         )
         kwargs = {"some_arg": "a-value-123", "another_arg": "another-value-456"}
         params = {"x": "2"}
@@ -365,7 +368,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
             filename=code_path,
             kind="job",
             project=self.project_name,
-            image="mlrun/mlrun",
+            image=self.image,
         )
         for params, results in cases:
             run = function.run(handler="MyCls::mtd", params=params)
@@ -377,7 +380,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
             "function-from-module",
             kind="job",
             project=self.project_name,
-            image="mlrun/mlrun",
+            image=self.image,
         )
         run = function.run(handler="json.dumps", params={"obj": {"x": 99}})
         print(run.status.results)
@@ -391,7 +394,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
             filename=str(self.assets_path / "sleep.py"),
             kind="job",
             project=self.project_name,
-            image="mlrun/mlrun",
+            image=self.image,
         )
         run = sleep_func.run(
             params={"time_to_sleep": 2},
@@ -436,7 +439,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
             handler="handler",
             project=self.project_name,
             filename=code_path,
-            image="mlrun/mlrun",
+            image=self.image,
         )
         with pytest.raises(Exception):
             err_function.run()
@@ -470,7 +473,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
             filename=str(self.assets_path / "sleep.py"),
             kind="job",
             project=self.project_name,
-            image="mlrun/mlrun",
+            image=self.image,
         )
         self.project.set_function(sleep_func)
         self.project.sync_functions(save=True)
@@ -515,7 +518,7 @@ class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
         self.project.set_function(func)
         self.project.sync_functions(save=True)
 
-        # when image is not provided, "mlrun/mlrun" should be used by default
+        # when image is not provided, self.image should be used by default
         args = [
             "--func-url",
             f"db://{self.project_name}/new-function",
@@ -566,7 +569,7 @@ def print_df(df):
         function_ref = FunctionReference(
             kind="job",
             code=code,
-            image="mlrun/mlrun",
+            image=self.image,
             name="test_df_as_param",
         )
 
@@ -593,7 +596,7 @@ def print_df(df):
             handler="set_labels_and_annotations_handler",
             project=self.project_name,
             filename=code_path,
-            image="mlrun/mlrun",
+            image=self.image,
         )
         run = function.run()
         assert run.metadata.labels.get("label1") == "label-value1"
@@ -602,7 +605,7 @@ def print_df(df):
     def test_normalize_run_name(self):
         function = mlrun.feature_store.common.RunConfig().to_function(
             default_kind="job",
-            default_image="mlrun/mlrun",
+            default_image=self.image,
         )
         function.with_code(str(self.assets_path / "handler.py"))
 
@@ -637,7 +640,7 @@ def print_df(df):
             image=image_name,
             set_as_default=True,
             with_mlrun=False,
-            base_image="mlrun/mlrun",
+            base_image=self.image,
             requirements=["vaderSentiment"],
             commands=[
                 f"echo ${builder_env_key} > /tmp/args.txt",
@@ -664,7 +667,7 @@ def print_df(df):
             filename=str(self.assets_path / "sleep.py"),
             kind="job",
             project=self.project_name,
-            image="mlrun/mlrun",
+            image=self.image,
         )
         run = sleep_func.run(
             params={"time_to_sleep": 30},
@@ -693,7 +696,7 @@ def print_df(df):
             func=str(self.assets_path / "function_with_simple_transformation.py"),
             name="test",
             kind="serving",
-            image="artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc9-46c395",
+            image=self.image,
         )
         graph = function.set_topology("flow", engine="async")
 
@@ -721,5 +724,48 @@ def print_df(df):
             assert (
                 "Mickey Mouse" in read_back_df["Product"].values
             ), f"Dataframe {read_back_df} was not transformed as expected"
+        finally:
+            v3io_client.close()
+
+    def test_job_from_serving_runtime_with_model(self):
+        function = self.project.set_function(
+            func=str(self.assets_path / "function_with_model.py"),
+            name="test",
+            kind="serving",
+            image=self.image,
+        )
+        graph = function.set_topology("flow", engine="async")
+
+        model_runner_step = ModelRunnerStep(name="my_model_runner")
+        model_runner_step.add_model(
+            endpoint_name="my_model",
+            model_class="DummyModel",
+            execution_mechanism="naive",
+        )
+
+        graph.to(model_runner_step).to(
+            name="parquet",
+            class_name="storey.ParquetTarget",
+            path=f"v3io:///projects/{self.project_name}/out.parquet",
+        )
+
+        job = function.to_job()
+
+        with open(str(self.assets_path / "test_data.csv")) as f:
+            csv_content = f.read()
+
+        v3io_client = v3io.Client()
+        try:
+            v3io_client.object.put(
+                "projects", f"{self.project_name}/in.csv", body=csv_content
+            )
+            inputs = {"data": f"v3io:///projects/{self.project_name}/in.csv"}
+            self.project.run_function(job, inputs=inputs, local=True)
+            read_back_df = pd.read_parquet(
+                f"v3io:///projects/{self.project_name}/out.parquet"
+            )
+            assert (
+                "extra" in read_back_df.columns
+            ), "Extra column was not added by model"
         finally:
             v3io_client.close()
