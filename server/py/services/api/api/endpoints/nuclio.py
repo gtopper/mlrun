@@ -272,6 +272,13 @@ async def deploy_function(
         background_tasks=[]
     )
     kind = function.get("kind")
+    logger.info(
+        f"111 Deploying function",
+        project=project,
+        name=name,
+        kind=kind,
+        serving_spec=str(function.spec.serving_spec),
+    )
     if (
         kind == RuntimeKinds.serving
         or kind == RuntimeKinds.job
