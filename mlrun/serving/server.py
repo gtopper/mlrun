@@ -15,6 +15,7 @@
 __all__ = ["GraphServer", "create_graph_server", "GraphContext", "MockEvent"]
 
 import asyncio
+import base64
 import copy
 import json
 import os
@@ -549,11 +550,11 @@ async def async_execute_graph(
 ) -> list[Any]:
     spec = mlrun.utils.get_serving_spec()
 
-    source_filename = spec.get("filename", None)
+    code = os.getenv("MLRUN_EXEC_CODE")
     namespace = {}
-    if source_filename:
-        with open(source_filename) as f:
-            exec(f.read(), namespace)
+    if code:
+        code = base64.b64decode(code).decode("utf-8")
+        exec(code, namespace)
 
     server = GraphServer.from_dict(spec)
 

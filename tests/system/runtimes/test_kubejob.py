@@ -44,7 +44,7 @@ def exec_cli(args, action="run"):
 class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
     project_name = "kubejob-system-test"
 
-    image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-d346f8"
+    image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-80eb8f"
 
     @pytest.mark.smoke
     def test_deploy_function(self):
@@ -692,7 +692,8 @@ def print_df(df):
             task.metadata.name for task in background_tasks
         ]
 
-    def test_job_from_serving_runtime(self):
+    @pytest.mark.parametrize("local", [True, False])
+    def test_job_from_serving_runtime(self, local):
         function = self.project.set_function(
             func=str(self.assets_path / "function_with_simple_transformation.py"),
             name="test",
@@ -718,7 +719,7 @@ def print_df(df):
                 "projects", f"{self.project_name}/in.csv", body=csv_content
             )
             inputs = {"data": f"v3io:///projects/{self.project_name}/in.csv"}
-            self.project.run_function(job, inputs=inputs, local=True)
+            self.project.run_function(job, inputs=inputs, local=local)
             read_back_df = pd.read_parquet(
                 f"v3io:///projects/{self.project_name}/out.parquet"
             )
