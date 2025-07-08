@@ -49,12 +49,12 @@ async def start_model_endpoint_creation_background_task(
         project=project,
         name=name,
         kind=kind,
-        serving_spec=str(function.spec.serving_spec),
+        serving_spec=str(function["spec"].get("serving_spec")),
     )
     if (
         kind == RuntimeKinds.serving
         or kind == RuntimeKinds.job
-        and function.spec.serving_spec
+        and function["spec"].get("serving_spec")
     ):
         monitoring_deployment = mm_deployment.MonitoringDeployment(project=project)
         (
