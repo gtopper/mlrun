@@ -15,6 +15,9 @@
 import os
 import traceback
 from http import HTTPStatus
+from typing import Optional
+
+import fastapi
 
 import mlrun.common.schemas
 from mlrun.errors import err_to_str
@@ -39,6 +42,7 @@ def build_function(
     client_version=None,
     client_python_version=None,
     force_build=False,
+    background_tasks: Optional[fastapi.BackgroundTasks] = None,
 ):
     fn = None
     ready = None
@@ -113,6 +117,8 @@ def build_function(
                 client_version=client_version,
                 client_python_version=client_python_version,
                 force_build=force_build,
+                background_tasks=background_tasks,
+                db_session=db_session,
             )
         fn.save(versioned=True)
         logger.info("Resolved function", fn=fn.to_dict())

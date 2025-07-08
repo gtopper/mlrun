@@ -690,6 +690,8 @@ def build_runtime(
     client_version=None,
     client_python_version=None,
     force_build=False,
+    background_tasks: typing.Optional[fastapi.BackgroundTasks] = None,
+    db_session=None,
 ):
     build: mlrun.model.ImageBuilder = runtime.spec.build
     namespace = runtime.metadata.namespace
@@ -739,6 +741,27 @@ def build_runtime(
 
         runtime.status.state = mlrun.common.schemas.FunctionState.ready
         return True
+
+    track_models = getattr(runtime.spec, "track_models", False)
+    logger.info(
+        "Starting model endpoint creation?",
+        track_models=track_models,
+        background_tasks=str(background_tasks),
+        db_session=str(db_session),
+    )
+    if track_models and background_tasks and db_session:
+        model_endpoint_creation_task_name, _ = (
+            start_model_endpoint_creation_background_task(
+                project=project,
+                name=runtime.metadata.name,
+                background_tasks=background_tasks,
+                function=runtime.to_dict(),
+                db_session=db_session,
+            )
+        )
+        runtime.spec.model_endpoint_creation_task_name = (
+            model_endpoint_creation_task_name
+        )
 
     build.image = _resolve_function_image_name(runtime, build.image)
 
