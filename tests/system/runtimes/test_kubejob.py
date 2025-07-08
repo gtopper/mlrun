@@ -829,4 +829,3 @@ def print_df(df):
 
         model_endpoints = mlrun.get_run_db().list_model_endpoints(self.project_name)
         print(f"model_endpoints={model_endpoints}")
-
