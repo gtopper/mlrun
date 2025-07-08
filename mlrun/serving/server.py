@@ -550,8 +550,13 @@ async def async_execute_graph(
 ) -> list[Any]:
     spec = mlrun.utils.get_serving_spec()
 
-    code = os.getenv("MLRUN_EXEC_CODE")
+    source_filename = spec.get("filename", None)
     namespace = {}
+    if source_filename:
+        with open(source_filename) as f:
+            exec(f.read(), namespace)
+
+    code = os.getenv("MLRUN_EXEC_CODE")
     if code:
         code = base64.b64decode(code).decode("utf-8")
         exec(code, namespace)
