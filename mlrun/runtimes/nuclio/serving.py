@@ -868,6 +868,8 @@ class ServingRuntime(RemoteRuntime):
             security_context=self.spec.security_context,
             state_thresholds=self.spec.state_thresholds,
             serving_spec=self._get_serving_spec(),
+            track_models=self.spec.track_models,
+            parameters=self.spec.parameters,
         )
         job = KubejobRuntime(
             spec=spec,

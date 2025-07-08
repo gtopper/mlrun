@@ -44,7 +44,7 @@ def exec_cli(args, action="run"):
 class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
     project_name = "kubejob-system-test"
 
-    image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-30f6eb"
+    image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-d346f8"
 
     @pytest.mark.smoke
     def test_deploy_function(self):
@@ -782,7 +782,7 @@ def print_df(df):
             content
         ), "Expected logs to contain retry attempt message"
 
-    def test_job_from_serving_runtime_with_model(self):
+    def test_job_from_serving_runtime_with_model_tracking(self):
         function = self.project.set_function(
             func=str(self.assets_path / "function_with_model.py"),
             name="test",
@@ -817,7 +817,7 @@ def print_df(df):
                 "projects", f"{self.project_name}/in.csv", body=csv_content
             )
             inputs = {"data": f"v3io:///projects/{self.project_name}/in.csv"}
-            self.project.run_function(job, inputs=inputs, local=True)
+            self.project.run_function(job, inputs=inputs, local=False)
             read_back_df = pd.read_parquet(
                 f"v3io:///projects/{self.project_name}/out.parquet"
             )
