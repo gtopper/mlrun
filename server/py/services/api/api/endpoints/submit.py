@@ -38,6 +38,7 @@ router = APIRouter()
 @router.post("/submit/")
 @router.post("/submit_job")
 @router.post("/submit_job/")
+# TODO: This is the endpoint that the job actually gets deployed with. Not build_function aka build/function
 async def submit_job(
     request: Request,
     username: Optional[str] = Header(None, alias="x-remote-user"),
