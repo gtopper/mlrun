@@ -251,7 +251,6 @@ async def submit_run(
             submit_run_sync,
             db_session,
             auth_info,
-            background_tasks,
             fn,
             task,
             data,
