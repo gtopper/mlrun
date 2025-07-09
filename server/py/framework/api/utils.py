@@ -213,20 +213,20 @@ async def submit_run(
     background_tasks: fastapi.BackgroundTasks,
     data,
 ):
-    track_models = getattr(fn.spec, "track_models", False)
-    logger.info(
-        "Starting model endpoint creation?",
-        track_models=track_models,
-        background_tasks=str(background_tasks),
-        db_session=str(db_session),
-    )
-
     response = None
 
     try:
         fn, task = _generate_function_and_task_from_submit_run_body(db_session, data)
         run_db = get_run_db_instance(db_session)
         fn.set_db_connection(run_db)
+
+        track_models = getattr(fn.spec, "track_models", False)
+        logger.info(
+            "Starting model endpoint creation?",
+            track_models=track_models,
+            background_tasks=str(background_tasks),
+            db_session=str(db_session),
+        )
 
         if track_models and background_tasks and db_session:
             (
