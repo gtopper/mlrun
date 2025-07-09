@@ -872,6 +872,7 @@ class ServingRuntime(RemoteRuntime):
             serving_spec=self._get_serving_spec(),
             track_models=self.spec.track_models,
             parameters=self.spec.parameters,
+            graph=self.spec.graph,
         )
         job = KubejobRuntime(
             spec=spec,
