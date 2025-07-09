@@ -59,7 +59,6 @@ import framework.api.utils
 import framework.db.session
 import framework.utils.background_tasks
 import framework.utils.singletons.k8s
-import services.api.api.endpoints.nuclio
 import services.api.crud.model_monitoring.helpers
 import services.api.utils.functions
 from framework.db.sqldb.models import ModelEndpoint
