@@ -15,6 +15,7 @@
 import asyncio
 import collections
 import copy
+import json
 import re
 import traceback
 import typing
@@ -246,9 +247,11 @@ async def submit_run(
             # TODO: there should be a better way to do this
             serving_spec = getattr(fn.spec, "serving_spec")
             if serving_spec:
+                serving_spec = json.loads(serving_spec)
                 logger.info(
                     f'Setting serving_spec["model_endpoint_creation_task_name"]={model_endpoint_creation_task_name}',
                 )
+                serving_spec = json.dumps(serving_spec)
                 serving_spec["model_endpoint_creation_task_name"] = (
                     model_endpoint_creation_task_name
                 )
