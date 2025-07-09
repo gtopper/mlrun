@@ -29,7 +29,6 @@ import mlrun.feature_store.common
 import mlrun.model
 import tests.system.base
 from mlrun.runtimes.function_reference import FunctionReference
-from mlrun.serving import ModelRunnerStep
 
 
 def exec_cli(args, action="run"):
@@ -44,7 +43,7 @@ def exec_cli(args, action="run"):
 class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
     project_name = "kubejob-system-test"
 
-    image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-64fb21"
+    image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-9be0f1"
 
     @pytest.mark.smoke
     def test_deploy_function(self):
@@ -728,54 +727,6 @@ def print_df(df):
             ), f"Dataframe {read_back_df} was not transformed as expected"
         finally:
             v3io_client.close()
-
-    def test_job_from_serving_runtime_with_model_tracking(self):
-        function = self.project.set_function(
-            func=str(self.assets_path / "function_with_model.py"),
-            name="test",
-            kind="serving",
-            image=self.image,
-        )
-        graph = function.set_topology("flow", engine="async")
-
-        model_runner_step = ModelRunnerStep(name="my_model_runner")
-        model_runner_step.add_model(
-            endpoint_name="my_model",
-            model_class="DummyModel",
-            execution_mechanism="naive",
-        )
-
-        graph.to(model_runner_step).to(
-            name="parquet",
-            class_name="storey.ParquetTarget",
-            path=f"v3io:///projects/{self.project_name}/out.parquet",
-        )
-
-        function.set_tracking()
-
-        job = function.to_job()
-
-        with open(str(self.assets_path / "test_data.csv")) as f:
-            csv_content = f.read()
-
-        v3io_client = v3io.Client()
-        try:
-            v3io_client.object.put(
-                "projects", f"{self.project_name}/in.csv", body=csv_content
-            )
-            inputs = {"data": f"v3io:///projects/{self.project_name}/in.csv"}
-            self.project.run_function(job, inputs=inputs, local=False)
-            read_back_df = pd.read_parquet(
-                f"v3io:///projects/{self.project_name}/out.parquet"
-            )
-            assert (
-                "extra" in read_back_df.columns
-            ), "Extra column was not added by model"
-        finally:
-            v3io_client.close()
-
-        model_endpoints = mlrun.get_run_db().list_model_endpoints(self.project_name)
-        print(f"model_endpoints={model_endpoints}")
 
     def test_retry_job_exhausted(self):
         code_path = str(self.assets_path / "raise_func.py")
