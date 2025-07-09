@@ -1864,6 +1864,13 @@ class MonitoringDeployment:
 
         logger.info(
             "111 _extract_model_endpoints_from_function_graph",
+            function_name=str(function_name),
+            function_tag=str(function_tag),
+            track_models=str(track_models),
+            graph=str(graph),
+            sampling_percentage=str(sampling_percentage),
+            model_endpoints_dict=str(model_endpoints_dict),
+            project=str(project),
             model_endpoints_instructions=str(model_endpoints_instructions),
         )
         return model_endpoints_instructions, graph
