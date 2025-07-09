@@ -22,7 +22,7 @@ async def start_model_endpoint_creation_background_task(
     )
     kind = function.get("kind")
     logger.info(
-        "111 Deploying function",
+        "111 start_model_endpoint_creation_background_task",
         project=project,
         name=name,
         kind=kind,
