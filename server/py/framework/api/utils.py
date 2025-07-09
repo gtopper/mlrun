@@ -242,6 +242,17 @@ async def submit_run(
             fn.spec.model_endpoint_creation_task_name = (
                 model_endpoint_creation_task_name
             )
+
+            # TODO: there should be a better way to do this
+            serving_spec = getattr(fn.spec, "serving_spec")
+            if serving_spec:
+                logger.info(
+                    f'Setting serving_spec["model_endpoint_creation_task_name"]={model_endpoint_creation_task_name}',
+                )
+                serving_spec["model_endpoint_creation_task_name"] = (
+                    model_endpoint_creation_task_name
+                )
+
             logger.info(
                 "Started model endpoint creation task",
                 model_endpoint_creation_task_name=model_endpoint_creation_task_name,
