@@ -558,7 +558,7 @@ async def async_execute_graph(
 
     if server.model_endpoint_creation_task_name:
         context.logger.info(
-            f"Checking the status of model endpoint creation task '{server.model_endpoint_creation_task_name}'"
+            f"Waiting for model endpoint creation task '{server.model_endpoint_creation_task_name}'..."
         )
         background_task = (
             mlrun.get_run_db().wait_for_background_task_to_reach_terminal_state(
