@@ -41,6 +41,7 @@ router = APIRouter()
 # TODO: This is the endpoint that the job actually gets deployed with. Not build_function aka build/function
 async def submit_job(
     request: Request,
+    background_tasks: fastapi.BackgroundTasks,
     username: Optional[str] = Header(None, alias="x-remote-user"),
     auth_info: mlrun.common.schemas.AuthInfo = Depends(deps.authenticate_request),
     db_session: Session = Depends(deps.get_db_session),
@@ -137,4 +138,6 @@ async def submit_job(
                 mlrun_constants.MLRunInternalLabels.client_python_version: client_python_version
             }
         )
-    return await framework.api.utils.submit_run(db_session, auth_info, data)
+    return await framework.api.utils.submit_run(
+        db_session, auth_info, background_tasks, data
+    )

@@ -24,6 +24,7 @@ from http import HTTPStatus
 from os import environ
 from pathlib import Path
 
+import fastapi
 import kubernetes.client
 import semver
 import sqlalchemy.orm
@@ -42,6 +43,9 @@ from mlrun.errors import err_to_str
 from mlrun.run import import_function, new_function
 from mlrun.runtimes.utils import enrich_function_from_dict
 from mlrun.utils import get_in, logger
+from server.py.services.api.utils.builder import (
+    start_model_endpoint_creation_background_task,
+)
 
 import framework.constants
 import framework.db.session
@@ -204,10 +208,17 @@ def _generate_function_and_task_from_submit_run_body(db_session: Session, data):
 
 
 async def submit_run(
-    db_session: Session, auth_info: mlrun.common.schemas.AuthInfo, data
+    db_session: Session,
+    auth_info: mlrun.common.schemas.AuthInfo,
+    background_tasks: fastapi.BackgroundTasks,
+    data,
 ):
     _, _, _, response = await run_in_threadpool(
-        submit_run_sync, db_session, auth_info, data
+        submit_run_sync,
+        db_session,
+        auth_info,
+        background_tasks,
+        data,
     )
     return response
 
@@ -722,7 +733,10 @@ def ensure_function_security_context(
 
 
 def submit_run_sync(
-    db_session: Session, auth_info: mlrun.common.schemas.AuthInfo, data
+    db_session: Session,
+    auth_info: mlrun.common.schemas.AuthInfo,
+    background_tasks: fastapi.BackgroundTasks,
+    data,
 ) -> tuple[str, str, str, dict]:
     """
     :return: Tuple with:
@@ -744,6 +758,31 @@ def submit_run_sync(
         for notification in task_for_logging["spec"].get("notifications", []):
             mlrun.utils.notifications.notification_pusher.sanitize_notification(
                 notification
+            )
+
+        track_models = getattr(fn.spec, "track_models", False)
+        logger.info(
+            "Starting model endpoint creation?",
+            track_models=track_models,
+            background_tasks=str(background_tasks),
+            db_session=str(db_session),
+        )
+        if track_models and background_tasks and db_session:
+            model_endpoint_creation_task_name, _ = (
+                start_model_endpoint_creation_background_task(
+                    project=task["metadata"]["project"],
+                    name=fn.metadata.name,
+                    background_tasks=background_tasks,
+                    function=fn.to_dict(),
+                    db_session=db_session,
+                )
+            )
+            fn.spec.model_endpoint_creation_task_name = (
+                model_endpoint_creation_task_name
+            )
+            logger.info(
+                "Started model endpoint creation task",
+                model_endpoint_creation_task_name=model_endpoint_creation_task_name,
             )
 
         logger.info("Submitting run", function=fn.to_dict(), task=task_for_logging)
