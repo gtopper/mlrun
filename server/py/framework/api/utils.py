@@ -213,13 +213,60 @@ async def submit_run(
     background_tasks: fastapi.BackgroundTasks,
     data,
 ):
-    _, _, _, response = await run_in_threadpool(
-        submit_run_sync,
-        db_session,
-        auth_info,
-        background_tasks,
-        data,
+    track_models = getattr(fn.spec, "track_models", False)
+    logger.info(
+        "Starting model endpoint creation?",
+        track_models=track_models,
+        background_tasks=str(background_tasks),
+        db_session=str(db_session),
     )
+
+    response = None
+
+    try:
+        fn, task = _generate_function_and_task_from_submit_run_body(db_session, data)
+        run_db = get_run_db_instance(db_session)
+        fn.set_db_connection(run_db)
+
+        if track_models and background_tasks and db_session:
+            (
+                model_endpoint_creation_task_name,
+                _,
+            ) = await start_model_endpoint_creation_background_task(
+                project=task["metadata"]["project"],
+                name=fn.metadata.name,
+                background_tasks=background_tasks,
+                function=fn.to_dict(),
+                db_session=db_session,
+            )
+            fn.spec.model_endpoint_creation_task_name = (
+                model_endpoint_creation_task_name
+            )
+            logger.info(
+                "Started model endpoint creation task",
+                model_endpoint_creation_task_name=model_endpoint_creation_task_name,
+            )
+
+        _, _, _, response = await run_in_threadpool(
+            submit_run_sync,
+            db_session,
+            auth_info,
+            background_tasks,
+            fn,
+            task,
+            data,
+        )
+    except HTTPException:
+        logger.error(traceback.format_exc())
+        raise
+    except mlrun.errors.MLRunHTTPStatusError:
+        raise
+    except Exception as err:
+        logger.error(traceback.format_exc())
+        log_and_raise(
+            HTTPStatus.BAD_REQUEST.value,
+            reason=f"Runtime error: {err_to_str(err)}",
+        )
     return response
 
 
@@ -735,7 +782,8 @@ def ensure_function_security_context(
 def submit_run_sync(
     db_session: Session,
     auth_info: mlrun.common.schemas.AuthInfo,
-    background_tasks: fastapi.BackgroundTasks,
+    fn,
+    task,
     data,
 ) -> tuple[str, str, str, dict]:
     """
@@ -748,121 +796,79 @@ def submit_run_sync(
     run_uid = None
     project = None
     response = None
-    try:
-        fn, task = _generate_function_and_task_from_submit_run_body(db_session, data)
 
-        run_db = get_run_db_instance(db_session)
-        fn.set_db_connection(run_db)
-
-        task_for_logging = copy.deepcopy(task)
-        for notification in task_for_logging["spec"].get("notifications", []):
-            mlrun.utils.notifications.notification_pusher.sanitize_notification(
-                notification
-            )
-
-        track_models = getattr(fn.spec, "track_models", False)
-        logger.info(
-            "Starting model endpoint creation?",
-            track_models=track_models,
-            background_tasks=str(background_tasks),
-            db_session=str(db_session),
+    task_for_logging = copy.deepcopy(task)
+    for notification in task_for_logging["spec"].get("notifications", []):
+        mlrun.utils.notifications.notification_pusher.sanitize_notification(
+            notification
         )
-        if track_models and background_tasks and db_session:
-            model_endpoint_creation_task_name, _ = (
-                start_model_endpoint_creation_background_task(
-                    project=task["metadata"]["project"],
-                    name=fn.metadata.name,
-                    background_tasks=background_tasks,
-                    function=fn.to_dict(),
-                    db_session=db_session,
-                )
-            )
-            fn.spec.model_endpoint_creation_task_name = (
-                model_endpoint_creation_task_name
-            )
-            logger.info(
-                "Started model endpoint creation task",
-                model_endpoint_creation_task_name=model_endpoint_creation_task_name,
-            )
 
-        logger.info("Submitting run", function=fn.to_dict(), task=task_for_logging)
-        schedule = data.get("schedule")
-        if schedule:
-            cron_trigger = schedule
-            if isinstance(cron_trigger, dict):
-                cron_trigger = mlrun.common.schemas.ScheduleCronTrigger(**cron_trigger)
-            schedule_labels = task["metadata"].get("labels")
+    logger.info("Submitting run", function=fn.to_dict(), task=task_for_logging)
+    schedule = data.get("schedule")
+    if schedule:
+        cron_trigger = schedule
+        if isinstance(cron_trigger, dict):
+            cron_trigger = mlrun.common.schemas.ScheduleCronTrigger(**cron_trigger)
+        schedule_labels = task["metadata"].get("labels")
 
-            # save the generated function enriched with the specific configuration to the db
-            # and update the task to point to the saved function, so that the scheduler will be able to
-            # access the db version of the function, and not the original function with the default spec
-            # (which can be changed between runs)
-            function_uri = fn.save(versioned=True)
-            data.pop("function", None)
-            data.pop("function_url", None)
-            task["spec"]["function"] = function_uri.replace("db://", "")
+        # save the generated function enriched with the specific configuration to the db
+        # and update the task to point to the saved function, so that the scheduler will be able to
+        # access the db version of the function, and not the original function with the default spec
+        # (which can be changed between runs)
+        function_uri = fn.save(versioned=True)
+        data.pop("function", None)
+        data.pop("function_url", None)
+        task["spec"]["function"] = function_uri.replace("db://", "")
 
-            is_update = (
-                services.api.utils.singletons.scheduler.get_scheduler().store_schedule(
-                    db_session,
-                    auth_info,
-                    task["metadata"]["project"],
-                    task["metadata"]["name"],
-                    mlrun.common.schemas.ScheduleKinds.job,
-                    data,
-                    cron_trigger,
-                    schedule_labels,
-                    fn_kind=fn.kind,
-                )
+        is_update = (
+            services.api.utils.singletons.scheduler.get_scheduler().store_schedule(
+                db_session,
+                auth_info,
+                task["metadata"]["project"],
+                task["metadata"]["name"],
+                mlrun.common.schemas.ScheduleKinds.job,
+                data,
+                cron_trigger,
+                schedule_labels,
+                fn_kind=fn.kind,
             )
-
-            project = task["metadata"]["project"]
-            response = {
-                "schedule": schedule,
-                "project": task["metadata"]["project"],
-                "name": task["metadata"]["name"],
-                # indicate whether it was created or modified
-                "action": "modified" if is_update else "created",
-            }
-
-        else:
-            # When processing a hyper-param run, secrets may be needed to access the parameters file (which is accessed
-            # locally from the mlrun service pod) - include project secrets and the caller's access key
-            param_file_secrets = (
-                services.api.crud.Secrets()
-                .list_project_secrets(
-                    task["metadata"]["project"],
-                    mlrun.common.schemas.SecretProviderName.kubernetes,
-                    allow_secrets_from_k8s=True,
-                )
-                .secrets
-            )
-            param_file_secrets["V3IO_ACCESS_KEY"] = (
-                auth_info.data_session or auth_info.access_key
-            )
-
-            run = fn.run(
-                task,
-                watch=False,
-                param_file_secrets=param_file_secrets,
-                auth_info=auth_info,
-            )
-            run_uid = run.metadata.uid
-            project = run.metadata.project
-            if run:
-                response = run.to_dict()
-
-    except HTTPException:
-        logger.error(traceback.format_exc())
-        raise
-    except mlrun.errors.MLRunHTTPStatusError:
-        raise
-    except Exception as err:
-        logger.error(traceback.format_exc())
-        log_and_raise(
-            HTTPStatus.BAD_REQUEST.value,
-            reason=f"Runtime error: {err_to_str(err)}",
         )
+
+        project = task["metadata"]["project"]
+        response = {
+            "schedule": schedule,
+            "project": task["metadata"]["project"],
+            "name": task["metadata"]["name"],
+            # indicate whether it was created or modified
+            "action": "modified" if is_update else "created",
+        }
+
+    else:
+        # When processing a hyper-param run, secrets may be needed to access the parameters file (which is accessed
+        # locally from the mlrun service pod) - include project secrets and the caller's access key
+        param_file_secrets = (
+            services.api.crud.Secrets()
+            .list_project_secrets(
+                task["metadata"]["project"],
+                mlrun.common.schemas.SecretProviderName.kubernetes,
+                allow_secrets_from_k8s=True,
+            )
+            .secrets
+        )
+        param_file_secrets["V3IO_ACCESS_KEY"] = (
+            auth_info.data_session or auth_info.access_key
+        )
+
+        run = fn.run(
+            task,
+            watch=False,
+            param_file_secrets=param_file_secrets,
+            auth_info=auth_info,
+        )
+        run_uid = run.metadata.uid
+        project = run.metadata.project
+        if run:
+            response = run.to_dict()
 
     logger.info("Run submission succeeded", run_uid=run_uid, function=fn.metadata.name)
     return project, fn.kind, run_uid, {"data": response}
