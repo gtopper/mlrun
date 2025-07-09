@@ -1861,6 +1861,11 @@ class MonitoringDeployment:
                     project=project,
                 )
             )
+
+        logger.info(
+            "111 _extract_model_endpoints_from_function_graph",
+            model_endpoints_instructions=str(model_endpoints_instructions),
+        )
         return model_endpoints_instructions, graph
 
     def _extract_meps_from_router_step(

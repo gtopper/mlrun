@@ -565,7 +565,9 @@ async def async_execute_graph(
             )
         )
         task_state = background_task.status.state
-        context.logger.info(f"111 async_execute_graph: Model endpoint creation task state: {task_state}")
+        context.logger.info(
+            f"111 async_execute_graph: Model endpoint creation task state: {task_state}"
+        )
         if task_state == mlrun.common.schemas.BackgroundTaskState.failed:
             raise mlrun.errors.MLRunRuntimeError(
                 "Aborting job due to model endpoint creation background task failure"
