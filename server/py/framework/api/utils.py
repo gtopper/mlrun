@@ -251,10 +251,10 @@ async def submit_run(
                 logger.info(
                     f'Setting serving_spec["model_endpoint_creation_task_name"]={model_endpoint_creation_task_name}',
                 )
-                serving_spec = json.dumps(serving_spec)
                 serving_spec["model_endpoint_creation_task_name"] = (
                     model_endpoint_creation_task_name
                 )
+                fn.spec.serving_spec = json.dumps(serving_spec)
 
             logger.info(
                 "Started model endpoint creation task",

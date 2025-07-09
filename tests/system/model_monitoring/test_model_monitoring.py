@@ -1914,7 +1914,7 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
 
     project_name = "model-monitoring-over-job"
     image: typing.Optional[str] = (
-        "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-91d441"
+        "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-2e8d15"
     )
 
     def test_job_from_serving_runtime_with_model_tracking(self):
