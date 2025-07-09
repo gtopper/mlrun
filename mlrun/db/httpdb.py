@@ -2068,6 +2068,10 @@ class HTTPRunDB(RunDBInterface):
         error_message = (
             f"Failed getting project background task. project={project}, name={name}"
         )
+        logger.info(
+            '111 get_project_background_task: self.api_call("GET", path, error_message)',
+            path=path,
+        )
         response = self.api_call("GET", path, error_message)
         return mlrun.common.schemas.BackgroundTask(**response.json())
 
@@ -2124,6 +2128,10 @@ class HTTPRunDB(RunDBInterface):
 
         path = f"background-tasks/{name}"
         error_message = f"Failed getting background task. name={name}"
+        logger.info(
+            '111 get_background_task: self.api_call("GET", path, error_message)',
+            path=path,
+        )
         response = self.api_call("GET", path, error_message)
         return mlrun.common.schemas.BackgroundTask(**response.json())
 
