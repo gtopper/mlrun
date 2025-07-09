@@ -123,7 +123,7 @@ class Retryer:
             if not exc:
                 return result
 
-            if type(exc) not in self.fatal_exceptions:
+            if type(exc) in self.fatal_exceptions:
                 break
 
             if retry:
