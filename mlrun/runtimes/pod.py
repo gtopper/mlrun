@@ -37,7 +37,6 @@ from ..config import config as mlconf
 from ..k8s_utils import (
     validate_node_selectors,
 )
-from ..serving.states import RootFlowStep, RouterStep, graph_root_setter
 from ..utils import logger, update_in
 from .base import BaseRuntime, FunctionSpec, spec_fields
 from .utils import (
@@ -236,7 +235,7 @@ class KubeResourceSpec(FunctionSpec):
         self.track_models = track_models
         self.parameters = parameters
         self._graph = None
-        self.graph: typing.Union[RouterStep, RootFlowStep] = graph
+        self.graph = graph
         # Termination grace period is internal for runtimes that have a pod termination hook hence it is not in the
         # _dict_fields and doesn't have a setter.
         self._termination_grace_period_seconds = None
@@ -315,12 +314,14 @@ class KubeResourceSpec(FunctionSpec):
         return self._termination_grace_period_seconds
 
     @property
-    def graph(self) -> typing.Union[RouterStep, RootFlowStep]:
+    def graph(self):
         """states graph, holding the serving workflow/DAG topology"""
         return self._graph
 
     @graph.setter
     def graph(self, graph):
+        from ..serving.states import graph_root_setter
+
         graph_root_setter(self, graph)
 
     def _serialize_field(
