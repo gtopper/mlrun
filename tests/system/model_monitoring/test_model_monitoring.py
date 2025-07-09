@@ -93,7 +93,7 @@ class TestModelEndpointsOperations(TestMLRunSystemModelMonitoring):
     """Applying basic model endpoint CRUD operations through MLRun API"""
 
     project_name = "mm-app-project"
-    image = "mlrun/mlrun"
+    image = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-0a847e"
 
     def setup_method(self, method):
         super().setup_method(method)
@@ -1920,7 +1920,7 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
 
     project_name = "model-monitoring-over-job"
     image: typing.Optional[str] = (
-        "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-f4a069"
+        "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-ff7386"
     )
 
     def test_job_from_serving_runtime_with_model_tracking(self):
@@ -1974,8 +1974,12 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
         finally:
             v3io_client.close()
 
-        model_endpoints = mlrun.get_run_db().list_model_endpoints(self.project_name)
-        print(f"model_endpoints={model_endpoints}")
+        model_endpoints = (
+            mlrun.get_run_db().list_model_endpoints(self.project_name).endpoints
+        )
+
+        assert len(model_endpoints) == 1
+        assert model_endpoints[0].metadata.name == "my_model"
 
 
 def _validate_model_uri(model_obj, model_endpoint):
