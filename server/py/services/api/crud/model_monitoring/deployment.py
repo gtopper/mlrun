@@ -1984,6 +1984,11 @@ class MonitoringDeployment:
     ]:
         model_endpoints_instructions = []
         for step in root_flow_step.steps.values():
+            logger.info(
+                "111 _extract_meps_from_root_flow_step",
+                step=str(step),
+                step_type=type(step).__name__,
+            )
             if isinstance(step, mlrun.serving.states.RouterStep):
                 model_endpoints_instructions.extend(
                     self._extract_meps_from_router_step(
