@@ -2214,6 +2214,18 @@ class MonitoringDeployment:
                         ),
                     )
                 )
+
+        logger.info(
+            "111 _extract_meps_from_model_runner_step",
+            function_name=function_name,
+            function_tag=function_tag,
+            track_models=track_models,
+            model_runner=model_runner,
+            sampling_percentage=sampling_percentage,
+            model_endpoints_dict=model_endpoints_dict,
+            model_endpoints_instructions=model_endpoints_instructions,
+        )
+
         return model_endpoints_instructions
 
 
