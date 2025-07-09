@@ -39,7 +39,7 @@ from tests.system.runtimes.assets.function_with_model import DummyModel
 class TestNuclioRuntime(tests.system.base.TestMLRunSystem):
     project_name = "does-not-exist-3"
 
-    image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-16cc13"
+    image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-3b3b51"
 
     def test_deploy_function_with_error_handler(self):
         code_path = str(self.assets_path / "function-with-catcher.py")
