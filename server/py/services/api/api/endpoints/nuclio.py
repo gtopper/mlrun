@@ -27,7 +27,6 @@ from fastapi.concurrency import run_in_threadpool
 
 import mlrun.common.schemas
 import mlrun.common.schemas.model_monitoring.constants as mm_constants
-from mlrun.common.model_monitoring.helpers import parse_model_endpoint_store_prefix
 from mlrun.common.schemas.serving import DeployResponse
 from mlrun.config import config
 from mlrun.utils import logger
@@ -419,44 +418,6 @@ def process_model_monitoring_secret(
             Secrets().delete_project_secret(project_name, provider, secret_key)
 
     return secret_value
-
-
-def create_model_monitoring_stream(
-    project: str,
-    stream_path: str,
-    shard_count: int,
-    retention_period_hours: int,
-    access_key: typing.Optional[str] = None,
-):
-    if stream_path.startswith("v3io://"):
-        import v3io.dataplane
-
-        _, container, stream_path = parse_model_endpoint_store_prefix(stream_path)
-
-        logger.info(
-            "Creating stream",
-            project=project,
-            stream_path=stream_path,
-            shard_count=shard_count,
-            container=container,
-            endpoint=mlrun.mlconf.v3io_api,
-        )
-
-        v3io_client = v3io.dataplane.Client(
-            endpoint=mlrun.mlconf.v3io_api, access_key=access_key
-        )
-
-        response = v3io_client.stream.create(
-            container=container,
-            stream_path=stream_path,
-            shard_count=shard_count,
-            retention_period_hours=retention_period_hours,
-            raise_for_status=v3io.dataplane.RaiseForStatus.never,
-            access_key=access_key,
-        )
-
-        if not (response.status_code == 400 and "ResourceInUse" in str(response.body)):
-            response.raise_for_status([409, 204])
 
 
 def _deploy_function(

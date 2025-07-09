@@ -44,7 +44,7 @@ def exec_cli(args, action="run"):
 class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
     project_name = "kubejob-system-test"
 
-    image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-186133"
+    image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc11-0ecaba"
 
     @pytest.mark.smoke
     def test_deploy_function(self):

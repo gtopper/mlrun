@@ -1,5 +1,4 @@
 import fastapi
-import sqlalchemy
 import sqlalchemy.orm
 from fastapi.concurrency import run_in_threadpool
 
