@@ -1867,6 +1867,7 @@ class MonitoringDeployment:
             function_name=str(function_name),
             function_tag=str(function_tag),
             track_models=str(track_models),
+            graph_type=type(graph).__name__,
             graph=str(graph),
             sampling_percentage=str(sampling_percentage),
             model_endpoints_dict=str(model_endpoints_dict),
