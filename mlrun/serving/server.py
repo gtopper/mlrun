@@ -560,7 +560,8 @@ async def async_execute_graph(
         )
         background_task = (
             mlrun.get_run_db().wait_for_background_task_to_reach_terminal_state(
-                server.project, server.model_endpoint_creation_task_name
+                project=server.project,
+                name=server.model_endpoint_creation_task_name,
             )
         )
         task_state = background_task.status.state
