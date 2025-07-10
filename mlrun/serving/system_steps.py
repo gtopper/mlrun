@@ -260,6 +260,7 @@ class BackgroundTaskStatus(storey.MapClass):
         )
         self._background_task_check_timestamp = None
         self._background_task_state = mlrun.common.schemas.BackgroundTaskState.running
+        logger.info("111 Created BackgroundTaskStatus object")
 
     def do(self, event):
         if self.server is None:

@@ -2069,6 +2069,13 @@ class HTTPRunDB(RunDBInterface):
             f"Failed getting project background task. project={project}, name={name}"
         )
         response = self.api_call("GET", path, error_message)
+        logger.info(
+            "111 get_project_background_task",
+            project=project,
+            name=name,
+            response_status=response.status_code,
+            response_body=response.text,
+        )
         return mlrun.common.schemas.BackgroundTask(**response.json())
 
     def list_project_background_tasks(
