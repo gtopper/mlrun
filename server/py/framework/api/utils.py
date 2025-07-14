@@ -42,6 +42,7 @@ from mlrun.common.helpers import parse_versioned_object_uri
 from mlrun.config import config
 from mlrun.errors import err_to_str
 from mlrun.run import import_function, new_function
+from mlrun.runtimes import RuntimeKinds
 from mlrun.runtimes.utils import enrich_function_from_dict
 from mlrun.utils import get_in, logger
 
@@ -58,11 +59,10 @@ import framework.utils.singletons.db
 import framework.utils.singletons.k8s
 import framework.utils.singletons.project_member
 import services.api.crud
+import services.api.crud.model_monitoring.deployment as mm_deployment
 import services.api.crud.runtimes.nuclio
 import services.api.utils.singletons.logs_dir
 import services.api.utils.singletons.scheduler
-
-from server.py.services.api.crud.model_monitoring.model_endpoints import start_model_endpoint_creation_background_task
 
 
 def log_and_raise(status=HTTPStatus.BAD_REQUEST.value, **kw):
@@ -205,6 +205,61 @@ def _generate_function_and_task_from_submit_run_body(db_session: Session, data):
     apply_enrichment_and_validation_on_task(task)
 
     return function, task
+
+
+# TODO: resolve duplication of this function without introducing circular imports
+async def start_model_endpoint_creation_background_task(
+    project: str,
+    name: str,
+    background_tasks: fastapi.BackgroundTasks,
+    function: dict,
+    db_session: sqlalchemy.orm.Session,
+    is_batch: bool,
+):
+    returned_background_tasks = mlrun.common.schemas.BackgroundTaskList(
+        background_tasks=[]
+    )
+    kind = function.get("kind")
+    if (
+        kind == RuntimeKinds.serving
+        or kind == RuntimeKinds.job
+        and function["spec"].get("serving_spec")
+    ):
+        monitoring_deployment = mm_deployment.MonitoringDeployment(project=project)
+        (
+            model_endpoints_instructions,
+            function,
+        ) = await monitoring_deployment._create_model_endpoints_instructions(
+            db_session=db_session,
+            function=function,
+            function_name=name,
+            project=project,
+            is_batch=is_batch,
+        )
+        logger.info(
+            "Creating Background Task for model endpoints creation",
+            project=project,
+            function=name,
+            is_batch=is_batch,
+        )
+        returned_background_task = await run_in_threadpool(
+            monitoring_deployment._create_model_endpoint_background_task,
+            db_session=db_session,
+            background_tasks=background_tasks,
+            project_name=project,
+            function_name=name,
+            function_tag=function.get("metadata", {}).get("tag") or "latest",
+            model_endpoints_instructions=model_endpoints_instructions,
+        )
+        returned_background_tasks.background_tasks.append(returned_background_task)
+
+    model_endpoint_creation_task_name = (
+        returned_background_tasks.background_tasks[0].metadata.name
+        if returned_background_tasks.background_tasks
+        else None
+    )
+
+    return function, model_endpoint_creation_task_name, returned_background_tasks
 
 
 async def submit_run(
