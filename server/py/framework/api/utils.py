@@ -285,13 +285,14 @@ async def submit_run(
 
         if track_models and background_tasks and db_session:
             project = task["metadata"]["project"]
+            function_name = fn.metadata.name
             (
                 fn,
                 model_endpoint_creation_task_name,
                 _,
             ) = await start_model_endpoint_creation_background_task(
                 project=project,
-                name=fn.metadata.name,
+                name=function_name,
                 background_tasks=background_tasks,
                 function=fn.to_dict(),
                 db_session=db_session,
@@ -300,7 +301,7 @@ async def submit_run(
             fn = mlrun.new_function(
                 runtime=fn,
                 project=project,
-                name=fn.metadata.name,
+                name=function_name,
             )
             fn.spec.model_endpoint_creation_task_name = (
                 model_endpoint_creation_task_name
