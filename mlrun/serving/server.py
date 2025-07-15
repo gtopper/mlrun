@@ -544,6 +544,8 @@ async def async_execute_graph(
     data: DataItem,
     batching: bool,
     batch_size: Optional[int],
+    read_as_lists: bool,
+    next_under_inputs: bool,
 ) -> list[Any]:
     spec = mlrun.utils.get_serving_spec()
 
@@ -624,7 +626,9 @@ async def async_execute_graph(
 
     batch = []
     for index, row in df.iterrows():
-        data = row.to_dict()
+        data = row.to_list() if read_as_lists else row.to_dict()
+        if next_under_inputs:
+            data = {"inputs": data}
         if batching:
             batch.append(data)
             if len(batch) == batch_size:
@@ -648,6 +652,8 @@ def execute_graph(
     data: DataItem,
     batching: bool = False,
     batch_size: Optional[int] = None,
+    read_as_lists: bool = False,
+    next_under_inputs: bool = False,
 ) -> (list[Any], Any):
     """
     Execute graph as a job, from start to finish.
@@ -660,7 +666,11 @@ def execute_graph(
 
     :return: A list of responses.
     """
-    return asyncio.run(async_execute_graph(context, data, batching, batch_size))
+    return asyncio.run(
+        async_execute_graph(
+            context, data, batching, batch_size, read_as_lists, next_under_inputs
+        )
+    )
 
 
 def _set_callbacks(server, context):
