@@ -390,7 +390,6 @@ def add_monitoring_general_steps(
         "storey.Filter",
         "filter_none",
         _fn="(event is not None)",
-        after="background_task_status_step",
         model_endpoint_creation_strategy=mlrun.common.schemas.ModelEndpointCreationStrategy.SKIP,
     )
     graph.add_step(
