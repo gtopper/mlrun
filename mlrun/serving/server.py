@@ -655,7 +655,7 @@ def execute_graph(
     batching: bool = False,
     batch_size: Optional[int] = None,
     read_as_lists: bool = False,
-    next_under_inputs: bool = False,
+    nest_under_inputs: bool = False,
 ) -> (list[Any], Any):
     """
     Execute graph as a job, from start to finish.
@@ -665,12 +665,14 @@ def execute_graph(
     :param batching: Whether to push one or more batches into the graph rather than row by row.
     :param batch_size: The number of rows to push per batch. If not set, and batching=True, the entire dataset will
         be pushed into the graph in one batch.
+    :param read_as_lists: Whether to read each row as a list instead of a dictionary.
+    :param nest_under_inputs: Whether to wrap each row with {"inputs": ...}.
 
     :return: A list of responses.
     """
     return asyncio.run(
         async_execute_graph(
-            context, data, batching, batch_size, read_as_lists, next_under_inputs
+            context, data, batching, batch_size, read_as_lists, nest_under_inputs
         )
     )
 
