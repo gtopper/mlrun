@@ -545,7 +545,7 @@ async def async_execute_graph(
     batching: bool,
     batch_size: Optional[int],
     read_as_lists: bool,
-    next_under_inputs: bool,
+    nest_under_inputs: bool,
 ) -> list[Any]:
     spec = mlrun.utils.get_serving_spec()
 
@@ -629,7 +629,7 @@ async def async_execute_graph(
     batch = []
     for index, row in df.iterrows():
         data = row.to_list() if read_as_lists else row.to_dict()
-        if next_under_inputs:
+        if nest_under_inputs:
             data = {"inputs": data}
         if batching:
             batch.append(data)
