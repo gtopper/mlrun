@@ -156,7 +156,7 @@ class MonitoringPreProcessor(storey.MapClass):
                 f"ModelRunnerStep name {model_runner_name} is not found in the graph or does not have monitoring data"
             )
         monitoring_data = step.monitoring_data
-        logger.debug(
+        logger.info(
             "monitoring preprocessor started",
             event=event,
             monitoring_data=monitoring_data,
