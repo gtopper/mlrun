@@ -648,14 +648,16 @@ async def async_execute_graph(
     batch = []
     for index, row in df.iterrows():
         data = row.to_list() if read_as_lists else row.to_dict()
-        if nest_under_inputs:
-            data = {"inputs": data}
         if batching:
             batch.append(data)
             if len(batch) == batch_size:
+                if nest_under_inputs:
+                    batch = {"inputs": batch}
                 await run(batch)
                 batch = []
         else:
+            if nest_under_inputs:
+                data = {"inputs": data}
             await run(data)
 
     if batch:
