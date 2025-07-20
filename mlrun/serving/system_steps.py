@@ -332,7 +332,7 @@ class SamplingStep(storey.MapClass):
         )
 
     def do(self, event):
-        logger.debug(
+        logger.info(
             "sampling step runs",
             event=event,
             sampling_percentage=self.sampling_percentage,
