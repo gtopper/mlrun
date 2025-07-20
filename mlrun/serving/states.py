@@ -1658,6 +1658,13 @@ class ModelRunnerStep(MonitoredStep):
         uid: str,
     ) -> list[str]:
         output_schema = None
+        logger.info(
+            "111 _get_model_endpoint_output_schema: mlrun.db.get_run_db().get_model_endpoint()",
+            name=name,
+            project=project,
+            endpoint_id=uid,
+            tsdb_metrics=False,
+        )
         try:
             model_endpoint: mlrun.common.schemas.model_monitoring.ModelEndpoint = (
                 mlrun.db.get_run_db().get_model_endpoint(
@@ -1672,6 +1679,7 @@ class ModelRunnerStep(MonitoredStep):
             mlrun.errors.MLRunNotFoundError,
             mlrun.errors.MLRunInvalidArgumentError,
         ):
+            traceback.print_exc()
             logger.warning(
                 f"Model endpoint not found, using default output schema for model {name}"
             )
