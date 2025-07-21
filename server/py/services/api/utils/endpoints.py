@@ -78,7 +78,7 @@ async def start_model_endpoint_creation_background_task(
     )
 
     model_endpoint_uids = [
-        model_endpoint_uid for (_, model_endpoint_uid) in model_endpoints_instructions
+        model_endpoint_uid for (model_endpoint_uid, _) in model_endpoints_instructions
     ]
     return (
         function,
