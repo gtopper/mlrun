@@ -249,6 +249,11 @@ async def submit_run(
                 project=project,
                 name=function_name,
             )
+            logger.info(
+                "111 What did we lose serializing the function?",
+                model_endpoint_creation_task_name=model_endpoint_creation_task_name,
+                fn=str(fn.to_dict()),
+            )
             fn.spec.model_endpoint_creation_task_name = (
                 model_endpoint_creation_task_name
             )
