@@ -45,7 +45,7 @@ from ..datastore.store_resources import ResourceCache
 from ..errors import MLRunInvalidArgumentError
 from ..execution import MLClientCtx
 from ..model import ModelObj
-from ..utils import get_caller_globals
+from ..utils import get_caller_globals, logger
 from .states import (
     FlowStep,
     MonitoredStep,
@@ -676,6 +676,16 @@ async def async_execute_graph(
     termination_result = server.wait_for_completion()
     if asyncio.iscoroutine(termination_result):
         await termination_result
+
+    model_endpoint_uids = spec.get("model_endpoint_uids", [])
+    output_stream = context.stream.output_stream
+
+    logger.info(
+        f"Job completed processing {len(df)} rows",
+        timestamp_column=timestamp_column,
+        model_endpoint_uids=model_endpoint_uids,
+        output_stream=str(output_stream),
+    )
 
     return responses
 
