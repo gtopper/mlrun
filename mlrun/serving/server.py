@@ -582,6 +582,9 @@ async def async_execute_graph(
             with open(source_filename) as f:
                 exec(f.read(), namespace)
 
+    context.logger.info(
+        f"111 async_execute_graph: type(spec)={type(spec)}, spec={spec}"
+    )
     server = GraphServer.from_dict(spec)
 
     if server.model_endpoint_creation_task_name:
