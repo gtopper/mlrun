@@ -2389,6 +2389,11 @@ class MonitoringDeployment:
                         ),
                     )
                 )
+        logger.info(
+            "111 _extract_meps_from_model_runner_step",
+            monitoring_data=str(monitoring_data),
+            model_endpoints_instructions=str(model_endpoints_instructions),
+        )
         return model_endpoints_instructions
 
 
