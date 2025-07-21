@@ -255,6 +255,10 @@ async def submit_run(
 
             # TODO: there should be a better way to do this
             serving_spec = getattr(fn.spec, "serving_spec")
+            logger.info(
+                "Before updating serving spec",
+                serving_spec=json.dumps(serving_spec),
+            )
             if serving_spec:
                 serving_spec = json.loads(serving_spec)
                 serving_spec["model_endpoint_creation_task_name"] = (
@@ -266,6 +270,7 @@ async def submit_run(
             logger.info(
                 "Started model endpoint creation task",
                 model_endpoint_creation_task_name=model_endpoint_creation_task_name,
+                serving_spec=json.dumps(serving_spec),
             )
 
         _, _, _, response = await run_in_threadpool(

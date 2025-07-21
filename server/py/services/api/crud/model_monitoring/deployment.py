@@ -1983,6 +1983,10 @@ class MonitoringDeployment:
                 override_type=mm_constants.EndpointType.BATCH_EP if is_batch else None,
             )
         )  # model endpoint, creation strategy, model path
+        logger.info(
+            "111 _create_model_endpoints_instructions",
+            graph=graph.to_json(),
+        )
         function.spec.graph = graph
         return model_endpoints_instructions, function.to_dict()
 
