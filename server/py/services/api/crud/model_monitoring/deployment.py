@@ -2166,6 +2166,13 @@ class MonitoringDeployment:
                     )
                 )
             elif isinstance(step, mlrun.serving.states.ModelRunnerStep):
+                logger.info(
+                    "111 before _extract_meps_from_model_runner_step",
+                    model_endpoint_creation_strategy=str(
+                        step.model_endpoint_creation_strategy
+                    ),
+                    step=str(step),
+                )
                 model_endpoints_instructions.extend(
                     self._extract_meps_from_model_runner_step(
                         function_name=function_name,
@@ -2194,6 +2201,14 @@ class MonitoringDeployment:
                     step.class_args[
                         mlrun.common.schemas.MonitoringData.MODEL_ENDPOINT_UID
                     ] = uid
+                    logger.info(
+                        "111 before _model_endpoint_draft",
+                        model_endpoint_creation_strategy=str(
+                            step.model_endpoint_creation_strategy
+                        ),
+                        step=str(step),
+                        uid=uid,
+                    )
                     model_endpoints_instructions.append(
                         (
                             self._model_endpoint_draft(
