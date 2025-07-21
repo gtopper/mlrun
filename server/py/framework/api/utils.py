@@ -265,9 +265,11 @@ async def submit_run(
                 serving_spec=json.dumps(serving_spec),
             )
             # update the graph from the function, because MEP IDs were added
-            serving_spec["graph"] = fn.spec.graph.to_dict(strip=True) if fn.spec.graph else {},
             if serving_spec:
                 serving_spec = json.loads(serving_spec)
+                serving_spec["graph"] = (
+                    fn.spec.graph.to_dict(strip=True) if fn.spec.graph else {},
+                )
                 serving_spec["model_endpoint_creation_task_name"] = (
                     model_endpoint_creation_task_name
                 )
