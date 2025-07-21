@@ -238,6 +238,11 @@ async def submit_run(
                 db_session=db_session,
                 is_batch=True,
             )
+            logger.info(
+                "111 Started model endpoint creation task",
+                model_endpoint_creation_task_name=model_endpoint_creation_task_name,
+                fn=str(fn),
+            )
             fn = mlrun.new_function(
                 runtime=fn,
                 project=project,
