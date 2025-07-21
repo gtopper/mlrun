@@ -1700,6 +1700,9 @@ class ModelRunnerStep(MonitoredStep):
                 mlrun.common.schemas.ModelRunnerStepData.MONITORING_DATA
             )
         )
+        logger.info(
+            "111 _calculate_monitoring_data", monitoring_data=str(monitoring_data)
+        )
         if isinstance(monitoring_data, dict):
             for model in monitoring_data:
                 monitoring_data[model][schemas.MonitoringData.OUTPUTS] = (
