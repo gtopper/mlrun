@@ -2153,6 +2153,13 @@ class MonitoringDeployment:
         model_endpoints_instructions = []
         for step in root_flow_step.steps.values():
             if isinstance(step, mlrun.serving.states.RouterStep):
+                logger.info(
+                    "111 before _extract_meps_from_router_step",
+                    model_endpoint_creation_strategy=str(
+                        step.model_endpoint_creation_strategy
+                    ),
+                    step=str(step),
+                )
                 model_endpoints_instructions.extend(
                     self._extract_meps_from_router_step(
                         function_name=function_name,
@@ -2164,6 +2171,13 @@ class MonitoringDeployment:
                         project=project,
                         override_type=override_type,
                     )
+                )
+                logger.info(
+                    "111 after _extract_meps_from_router_step",
+                    model_endpoint_creation_strategy=str(
+                        step.model_endpoint_creation_strategy
+                    ),
+                    step=str(step),
                 )
             elif isinstance(step, mlrun.serving.states.ModelRunnerStep):
                 logger.info(
