@@ -56,7 +56,7 @@ async def start_model_endpoint_creation_background_task(
             project=project,
             function=name,
             is_batch=is_batch,
-            graph=str(function.spec.graph),
+            function_dict=str(function),
             model_endpoints_instructions=str(model_endpoints_instructions),
         )
         returned_background_task = await run_in_threadpool(
