@@ -275,7 +275,7 @@ async def submit_run(
                     new_graph=new_graph,
                     new_graph_type=str(type(new_graph)),
                 )
-                serving_spec["graph"] = (new_graph,)
+                serving_spec["graph"] = new_graph
                 serving_spec["model_endpoint_creation_task_name"] = (
                     model_endpoint_creation_task_name
                 )
