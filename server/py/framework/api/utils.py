@@ -230,6 +230,7 @@ async def submit_run(
                 fn,
                 model_endpoint_creation_task_name,
                 _,
+                model_endpoint_uids,
             ) = await start_model_endpoint_creation_background_task(
                 project=project,
                 name=function_name,
@@ -259,6 +260,7 @@ async def submit_run(
                 serving_spec["model_endpoint_creation_task_name"] = (
                     model_endpoint_creation_task_name
                 )
+                serving_spec["model_endpoint_uids"] = model_endpoint_uids
                 fn.spec.serving_spec = json.dumps(serving_spec)
 
             logger.info(

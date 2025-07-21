@@ -34,6 +34,7 @@ async def start_model_endpoint_creation_background_task(
     returned_background_tasks = mlrun.common.schemas.BackgroundTaskList(
         background_tasks=[]
     )
+    model_endpoints_instructions = []
     kind = function.get("kind")
     if (
         kind == RuntimeKinds.serving
@@ -76,4 +77,12 @@ async def start_model_endpoint_creation_background_task(
         else None
     )
 
-    return function, model_endpoint_creation_task_name, returned_background_tasks
+    model_endpoint_uids = [
+        model_endpoint_uid for (_, model_endpoint_uid) in model_endpoints_instructions
+    ]
+    return (
+        function,
+        model_endpoint_creation_task_name,
+        returned_background_tasks,
+        model_endpoint_uids,
+    )
