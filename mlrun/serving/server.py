@@ -682,12 +682,16 @@ async def async_execute_graph(
     server = GraphServer.from_dict(spec)
     server.init_states(None, namespace)
     output_stream = server.context.stream.output_stream
+    output_stream_container = output_stream._container
+    output_stream_stream_path = output_stream._stream_path
 
     context.logger.info(
         f"Job completed processing {len(df)} rows",
         timestamp_column=timestamp_column,
         model_endpoint_uids=model_endpoint_uids,
         output_stream=str(output_stream),
+        output_stream_container=output_stream_container,
+        output_stream_stream_path=output_stream_stream_path,
     )
 
     return responses
