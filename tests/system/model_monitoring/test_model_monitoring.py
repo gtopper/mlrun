@@ -32,6 +32,7 @@ from sklearn.datasets import load_diabetes, load_iris, make_classification
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
+from v3io.dataplane.response import HttpResponseError as V3ioHttpResponseError
 
 import mlrun.artifacts.model
 import mlrun.common.schemas.alert as alert_objects
@@ -1961,7 +1962,7 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
     """Test get_model_endpoint_monitoring_metrics functionality."""
 
     project_name = "model-monitoring-over-job"
-    image = "mlrun/mlrun"
+    image = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc14-68e51a"
 
     def test_job_from_serving_runtime_with_model_tracking(self):
         function = self.project.set_function(
@@ -1977,6 +1978,7 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
             endpoint_name="my_model",
             model_class="DummyModel",
             execution_mechanism="naive",
+            model_endpoint_creation_strategy=mm_constants.ModelEndpointCreationStrategy.OVERWRITE,
         )
 
         graph.to(model_runner_step).to(
@@ -2004,6 +2006,9 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
                 "projects", f"{self.project_name}/in.csv", body=csv_content
             )
             inputs = {"data": f"v3io:///projects/{self.project_name}/in.csv"}
+            # params = dict(
+            #     timestamp_column=""
+            # )
             self.project.run_function(job, inputs=inputs, local=False)
             read_back_df = pd.read_parquet(
                 f"v3io:///projects/{self.project_name}/out.parquet"
@@ -2011,16 +2016,58 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
             assert (
                 "extra" in read_back_df.columns
             ), "Extra column was not added by model"
+
+            model_endpoints = (
+                mlrun.get_run_db().list_model_endpoints(self.project_name).endpoints
+            )
+
+            assert len(model_endpoints) == 1
+            assert model_endpoints[0].metadata.name == "my_model"
+            assert model_endpoints[0].metadata.endpoint_type == EndpointType.BATCH_EP
+
+            stream_uri = f"{self.project_name}/model-endpoints/stream-v1"
+            describe_output = v3io_client.stream.describe(
+                "projects",
+                stream_uri,
+            ).output
+            shard_count = describe_output.shard_count
+            read_back_records = []
+            for shard in range(shard_count):
+                try:
+                    location = v3io_client.stream.seek(
+                        "projects", stream_uri, shard, "EARLIEST"
+                    ).output.location
+                except V3ioHttpResponseError as response_error:
+                    if response_error.status_code == 404:
+                        continue
+                    raise response_error
+                while True:
+                    get_records_result = v3io_client.stream.get_records(
+                        "projects", stream_uri, shard, location
+                    ).output
+                    location = get_records_result.next_location
+                    for record in get_records_result.records:
+                        read_back_records.append(json.loads(record.data))
+                    if get_records_result.records_behind_latest == 0:
+                        break
+            print(f"read_back_records={json.dumps(read_back_records)}")
+            assert len(read_back_records) == 4
+            for record in read_back_records:
+                assert {
+                    "model",
+                    "model_class",
+                    "when",
+                    "request",
+                    "resp",
+                    "endpoint_id",
+                }.issubset(record)
+                assert record.get("error") is None
+                assert (
+                    record["request"]["inputs"][0] + [123]
+                    == record["resp"]["outputs"][0]
+                )
         finally:
             v3io_client.close()
-
-        model_endpoints = (
-            mlrun.get_run_db().list_model_endpoints(self.project_name).endpoints
-        )
-
-        assert len(model_endpoints) == 1
-        assert model_endpoints[0].metadata.name == "my_model"
-        assert model_endpoints[0].metadata.endpoint_type == EndpointType.BATCH_EP
 
 
 def _validate_model_uri(model_obj, model_endpoint):
