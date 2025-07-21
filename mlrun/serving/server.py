@@ -680,6 +680,7 @@ async def async_execute_graph(
     model_endpoint_uids = spec.get("model_endpoint_uids", [])
 
     server = GraphServer.from_dict(spec)
+    server.init_states(None, namespace)
     output_stream = server.context.stream.output_stream
 
     context.logger.info(
