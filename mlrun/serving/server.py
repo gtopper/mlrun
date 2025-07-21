@@ -561,6 +561,7 @@ def v2_serving_init(context, namespace=None):
 async def async_execute_graph(
     context: MLClientCtx,
     data: DataItem,
+    timestamp_column: Optional[str],
     batching: bool,
     batch_size: Optional[int],
     read_as_lists: bool,
@@ -639,6 +640,17 @@ async def async_execute_graph(
 
     async def run(body):
         event = storey.Event(id=index, body=body)
+        if timestamp_column:
+            body = event.body
+            if not isinstance(body, dict):
+                raise mlrun.errors.MLRunRuntimeError(
+                    f"When timestamp_column=True, event body must be a dict – got {type(body).__name__} instead"
+                )
+            if timestamp_column not in body:
+                raise mlrun.errors.MLRunRuntimeError(
+                    f"Event body '{body}' did not contain timestamp column '{timestamp_column}'"
+                )
+            event._original_timestamp = body[timestamp_column]
         response = await server.run(event, context)
         responses.append(response)
 
@@ -671,6 +683,7 @@ async def async_execute_graph(
 def execute_graph(
     context: MLClientCtx,
     data: DataItem,
+    timestamp_column: Optional[str] = None,
     batching: bool = False,
     batch_size: Optional[int] = None,
     read_as_lists: bool = False,
@@ -681,6 +694,7 @@ def execute_graph(
 
     :param context: The job's execution client context.
     :param data: The input data to the job, to be pushed into the graph row by row, or in batches.
+    :param timestamp_column: The name of the column that will be used as the timestamp for model monitoring purposes.
     :param batching: Whether to push one or more batches into the graph rather than row by row.
     :param batch_size: The number of rows to push per batch. If not set, and batching=True, the entire dataset will
         be pushed into the graph in one batch.
@@ -691,7 +705,13 @@ def execute_graph(
     """
     return asyncio.run(
         async_execute_graph(
-            context, data, batching, batch_size, read_as_lists, nest_under_inputs
+            context,
+            data,
+            timestamp_column,
+            batching,
+            batch_size,
+            read_as_lists,
+            nest_under_inputs,
         )
     )
 

@@ -156,7 +156,7 @@ class MonitoringPreProcessor(storey.MapClass):
                 f"ModelRunnerStep name {model_runner_name} is not found in the graph or does not have monitoring data"
             )
         monitoring_data = step.monitoring_data
-        logger.info(
+        logger.debug(
             "monitoring preprocessor started",
             event=event,
             monitoring_data=monitoring_data,
@@ -168,6 +168,12 @@ class MonitoringPreProcessor(storey.MapClass):
                     request, resp = self.reconstruct_request_resp_fields(
                         event, model, monitoring_data[model]
                     )
+                    if hasattr(event, "_original_timestamp"):
+                        when = event._original_timestamp
+                    else:
+                        when = event._metadata.get(model, {}).get(
+                            mm_schemas.StreamProcessingEvent.WHEN
+                        )
                     monitoring_event_list.append(
                         {
                             mm_schemas.StreamProcessingEvent.MODEL: model,
@@ -177,9 +183,7 @@ class MonitoringPreProcessor(storey.MapClass):
                             mm_schemas.StreamProcessingEvent.MICROSEC: event._metadata.get(
                                 model, {}
                             ).get(mm_schemas.StreamProcessingEvent.MICROSEC),
-                            mm_schemas.StreamProcessingEvent.WHEN: event._metadata.get(
-                                model, {}
-                            ).get(mm_schemas.StreamProcessingEvent.WHEN),
+                            mm_schemas.StreamProcessingEvent.WHEN: when,
                             mm_schemas.StreamProcessingEvent.ENDPOINT_ID: monitoring_data[
                                 model
                             ].get(
