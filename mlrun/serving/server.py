@@ -620,7 +620,9 @@ async def async_execute_graph(
 
     if timestamp_column:
         context.logger.info(f"Sorting dataframe by {timestamp_column}")
-        df["timestamp"] = pd.to_datetime(df["timestamp"])  # in case it's a string
+        df[timestamp_column] = pd.to_datetime(  # in case it's a string
+            df[timestamp_column]
+        )
         df.sort_values(by=timestamp_column, inplace=True)
         if len(df) >= 2:
             start_time = df["timestamp"].iloc[0]
