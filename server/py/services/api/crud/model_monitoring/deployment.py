@@ -1522,7 +1522,9 @@ class MonitoringDeployment:
                         if container.startswith("users")
                         else profile.v3io_access_key,
                         raise_for_status=[
-                            404
+                            200,
+                            204,
+                            404,
                         ],  # if the stream doesn't exist then there's nothing to delete
                     )
                     logger.debug(
