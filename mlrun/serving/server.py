@@ -625,8 +625,8 @@ async def async_execute_graph(
         )
         df.sort_values(by=timestamp_column, inplace=True)
         if len(df) >= 2:
-            start_time = df["timestamp"].iloc[0]
-            end_time = df["timestamp"].iloc[-1]
+            start_time = df[timestamp_column].iloc[0]
+            end_time = df[timestamp_column].iloc[-1]
             time_range = end_time - start_time
             start_time = start_time.isoformat()
             end_time = end_time.isoformat()
