@@ -618,16 +618,16 @@ async def async_execute_graph(
         context.logger.warn("Job terminated due to empty inputs (0 rows)")
         return []
 
-    first_timestamp = None
-    last_timestamp = None
     if timestamp_column:
         context.logger.info(f"Sorting dataframe by {timestamp_column}")
         df["timestamp"] = pd.to_datetime(df["timestamp"])  # in case it's a string
         df.sort_values(by=timestamp_column, inplace=True)
         if len(df) >= 2:
-            first_timestamp = df["timestamp"].iloc[0]
-            last_timestamp = df["timestamp"].iloc[-1]
-            time_range = last_timestamp - first_timestamp
+            start_time = df["timestamp"].iloc[0]
+            end_time = df["timestamp"].iloc[-1]
+            time_range = end_time - start_time
+            start_time = start_time.isoformat()
+            end_time = end_time.isoformat()
             # TODO: tie this to the controller's base period
             if time_range > pd.Timedelta("10000h"):
                 context.logger.warn(
@@ -635,7 +635,9 @@ async def async_execute_graph(
                 )
                 mm_enabled = False
         else:
-            first_timestamp = last_timestamp = df["timestamp"].iloc[0]
+            start_time = end_time = df["timestamp"].iloc[0].isoformat()
+    else:
+        start_time = datetime.now(tz=timezone.utc).isoformat()
 
     if mm_enabled:
         server.graph = add_system_steps_to_graph(
@@ -718,12 +720,17 @@ async def async_execute_graph(
     output_stream_container = output_stream._container
     output_stream_stream_path = output_stream._stream_path
 
+    batch_completion_time = datetime.now(tz=timezone.utc).isoformat()
+
+    if not timestamp_column:
+        end_time = batch_completion_time
+
     mm_stream_record = dict(
         kind="batch_complete",
         project=context.project,
-        first_timestamp=first_timestamp,
-        last_timestamp=last_timestamp,
-        batch_completion_time=datetime.now(tz=timezone.utc).isoformat(),
+        first_timestamp=start_time,
+        last_timestamp=end_time,
+        batch_completion_time=batch_completion_time,
     )
     for mep_uid in spec.get("model_endpoint_uids", []):
         mm_stream_record["endpoint_id"] = mep_uid
