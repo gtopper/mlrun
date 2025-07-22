@@ -163,25 +163,25 @@ class MonitoringPreProcessor(storey.MapClass):
             metadata=event._metadata,
         )
 
-        def get_when(model):
-            if hasattr(event, "_original_timestamp"):
-                logger.info(
-                    f"111 MonitoringPreProcessor.do: when = "
-                    f"event._original_timestamp ({event._original_timestamp})"
-                )
-                return event._original_timestamp
-            else:
-                logger.info("111 MonitoringPreProcessor.do: setting when from metadata")
-                return event._metadata.get(model, {}).get(
-                    mm_schemas.StreamProcessingEvent.WHEN
-                )
-
         if len(monitoring_data) > 1:
             for model in event.body.keys():
                 if model in monitoring_data:
                     request, resp = self.reconstruct_request_resp_fields(
                         event, model, monitoring_data[model]
                     )
+                    if hasattr(event, "_original_timestamp"):
+                        logger.info(
+                            f"111 MonitoringPreProcessor.do: when = "
+                            f"event._original_timestamp ({event._original_timestamp})"
+                        )
+                        when = event._original_timestamp
+                    else:
+                        logger.info(
+                            "111 MonitoringPreProcessor.do: setting when from model metadata"
+                        )
+                        when = event._metadata.get(model, {}).get(
+                            mm_schemas.StreamProcessingEvent.WHEN
+                        )
                     monitoring_event_list.append(
                         {
                             mm_schemas.StreamProcessingEvent.MODEL: model,
@@ -191,7 +191,7 @@ class MonitoringPreProcessor(storey.MapClass):
                             mm_schemas.StreamProcessingEvent.MICROSEC: event._metadata.get(
                                 model, {}
                             ).get(mm_schemas.StreamProcessingEvent.MICROSEC),
-                            mm_schemas.StreamProcessingEvent.WHEN: get_when(model),
+                            mm_schemas.StreamProcessingEvent.WHEN: when,
                             mm_schemas.StreamProcessingEvent.ENDPOINT_ID: monitoring_data[
                                 model
                             ].get(
@@ -224,6 +224,15 @@ class MonitoringPreProcessor(storey.MapClass):
             request, resp = self.reconstruct_request_resp_fields(
                 event, model, monitoring_data[model]
             )
+            if hasattr(event, "_original_timestamp"):
+                logger.info(
+                    f"111 MonitoringPreProcessor.do: when = "
+                    f"event._original_timestamp ({event._original_timestamp})"
+                )
+                when = event._original_timestamp
+            else:
+                logger.info("111 MonitoringPreProcessor.do: setting when from metadata")
+                when = event._metadata.get(mm_schemas.StreamProcessingEvent.WHEN)
             monitoring_event_list.append(
                 {
                     mm_schemas.StreamProcessingEvent.MODEL: model,
@@ -233,7 +242,7 @@ class MonitoringPreProcessor(storey.MapClass):
                     mm_schemas.StreamProcessingEvent.MICROSEC: event._metadata.get(
                         mm_schemas.StreamProcessingEvent.MICROSEC
                     ),
-                    mm_schemas.StreamProcessingEvent.WHEN: get_when(model),
+                    mm_schemas.StreamProcessingEvent.WHEN: when,
                     mm_schemas.StreamProcessingEvent.ENDPOINT_ID: monitoring_data[
                         model
                     ].get(mlrun.common.schemas.MonitoringData.MODEL_ENDPOINT_UID),
