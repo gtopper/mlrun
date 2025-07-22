@@ -169,8 +169,15 @@ class MonitoringPreProcessor(storey.MapClass):
                         event, model, monitoring_data[model]
                     )
                     if hasattr(event, "_original_timestamp"):
+                        logger.info(
+                            f"111 MonitoringPreProcessor.do: when = "
+                            f"event._original_timestamp ({event._original_timestamp})"
+                        )
                         when = event._original_timestamp
                     else:
+                        logger.info(
+                            "111 MonitoringPreProcessor.do: setting when from metadata"
+                        )
                         when = event._metadata.get(model, {}).get(
                             mm_schemas.StreamProcessingEvent.WHEN
                         )

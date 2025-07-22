@@ -653,6 +653,9 @@ async def async_execute_graph(
                 raise mlrun.errors.MLRunRuntimeError(
                     f"Event body '{body}' did not contain timestamp column '{timestamp_column}'"
                 )
+            context.logger.info(
+                f"111 async_execute_graph/run: setting event._original_timestamp = {body[timestamp_column]}"
+            )
             event._original_timestamp = body[timestamp_column]
         response = await server.run(event, context)
         responses.append(response)
