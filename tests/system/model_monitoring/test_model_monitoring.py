@@ -2006,10 +2006,12 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
                 "projects", f"{self.project_name}/in.csv", body=csv_content
             )
             inputs = {"data": f"v3io:///projects/{self.project_name}/in.csv"}
-            # params = dict(
-            #     timestamp_column=""
-            # )
-            self.project.run_function(job, inputs=inputs, local=False)
+            params = dict(
+                # timestamp_column="time",
+            )
+            start_time = datetime.now(timezone.utc)  # any time zone will do
+            self.project.run_function(job, inputs=inputs, params=params, local=False)
+            end_time = datetime.now(timezone.utc)
             read_back_df = pd.read_parquet(
                 f"v3io:///projects/{self.project_name}/out.parquet"
             )
@@ -2066,6 +2068,8 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
                     record["request"]["inputs"][0] + [123]
                     == record["resp"]["outputs"][0]
                 )
+                when = datetime.fromisoformat(record["when"])
+                assert end_time > when > start_time
         finally:
             v3io_client.close()
 
