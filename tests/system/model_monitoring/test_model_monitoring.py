@@ -1962,7 +1962,7 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
     """Test get_model_endpoint_monitoring_metrics functionality."""
 
     project_name = "model-monitoring-over-job"
-    image = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc14-881868"
+    image = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc14-e73ab1"
 
     @pytest.mark.parametrize("with_timestamp_column", [False, True])
     def test_job_from_serving_runtime_with_model_tracking(self, with_timestamp_column):
@@ -2053,29 +2053,51 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
                         read_back_records.append(json.loads(record.data))
                     if get_records_result.records_behind_latest == 0:
                         break
-            print(f"read_back_records={json.dumps(read_back_records)}")
-            assert len(read_back_records) == 4
+            assert len(read_back_records) == 5
             earliest_time_in_dataset = datetime(2020, 1, 1, 1, tzinfo=timezone.utc)
             latest_time_in_dataset = datetime(2020, 1, 1, 4, tzinfo=timezone.utc)
             for record in read_back_records:
-                assert {
-                    "model",
-                    "model_class",
-                    "when",
-                    "request",
-                    "resp",
-                    "endpoint_id",
-                }.issubset(record)
-                assert record.get("error") is None
-                assert (
-                    record["request"]["inputs"][0] + [123]
-                    == record["resp"]["outputs"][0]
-                )
-                when = datetime.fromisoformat(record["when"])
-                if with_timestamp_column:
-                    assert latest_time_in_dataset >= when >= earliest_time_in_dataset
+                if record.get("kind") == "batch_complete":
+                    assert "endpoint_id" in record
+                    assert record["kind"] == "batch_complete"
+                    assert record["project"] == self.project_name
+                    if with_timestamp_column:
+                        assert record["first_timestamp"] == "2020-01-01T01:00:00+00:00"
+                        assert record["last_timestamp"] == "2020-01-01T04:00:00+00:00"
+                    else:
+                        first_timestamp = datetime.fromisoformat(
+                            record["first_timestamp"]
+                        )
+                        last_timestamp = datetime.fromisoformat(
+                            record["last_timestamp"]
+                        )
+                        assert end_time > last_timestamp > first_timestamp > start_time
+                    assert (
+                        end_time
+                        > datetime.fromisoformat(record["batch_completion_time"])
+                        > start_time
+                    )
                 else:
-                    assert end_time > when > start_time
+                    assert {
+                        "model",
+                        "model_class",
+                        "when",
+                        "request",
+                        "resp",
+                        "endpoint_id",
+                    }.issubset(record)
+                    assert record.get("error") is None
+                    assert (
+                        record["request"]["inputs"][0] + [123]
+                        == record["resp"]["outputs"][0]
+                    )
+                    when = datetime.fromisoformat(record["when"])
+                    if with_timestamp_column:
+                        assert (
+                            latest_time_in_dataset >= when >= earliest_time_in_dataset
+                        )
+                    else:
+                        assert end_time > when > start_time
         finally:
             v3io_client.close()
 
