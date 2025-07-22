@@ -22,8 +22,10 @@ import os
 import socket
 import traceback
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Optional, Union
 
+import pandas as pd
 import storey
 from nuclio import Context as NuclioContext
 from nuclio.request import Logger as NuclioLogger
@@ -609,14 +611,41 @@ async def async_execute_graph(
                 f"(status='{task_state}')"
             )
 
-    server.graph = add_system_steps_to_graph(
-        server.project,
-        copy.deepcopy(server.graph),
-        spec.get("track_models"),
-        context,
-        spec,
-        pause_until_background_task_completion=False,  # we've already awaited it
-    )
+    mm_enabled = True
+    df = data.as_df()
+
+    if df.empty:
+        context.logger.warn("Job terminated due to empty inputs (0 rows)")
+        return []
+
+    first_timestamp = None
+    last_timestamp = None
+    if timestamp_column:
+        context.logger.info(f"Sorting dataframe by {timestamp_column}")
+        df["timestamp"] = pd.to_datetime(df["timestamp"])  # in case it's a string
+        df.sort_values(by=timestamp_column, inplace=True)
+        if len(df) >= 2:
+            first_timestamp = df["timestamp"].iloc[0]
+            last_timestamp = df["timestamp"].iloc[-1]
+            time_range = last_timestamp - first_timestamp
+            # TODO: tie this to the controller's base period
+            if time_range > pd.Timedelta("10000h"):
+                context.logger.warn(
+                    f"Dataframe time range is too long: {time_range}. Job will not be tracked!"
+                )
+                mm_enabled = False
+        else:
+            first_timestamp = last_timestamp = df["timestamp"].iloc[0]
+
+    if mm_enabled:
+        server.graph = add_system_steps_to_graph(
+            server.project,
+            copy.deepcopy(server.graph),
+            spec.get("track_models"),
+            context,
+            spec,
+            pause_until_background_task_completion=False,  # we've already awaited it
+        )
 
     if config.log_level.lower() == "debug":
         server.verbose = True
@@ -636,8 +665,6 @@ async def async_execute_graph(
 
     if server.verbose:
         context.logger.info(server.to_yaml())
-
-    df = data.as_df()
 
     responses = []
 
@@ -690,6 +717,17 @@ async def async_execute_graph(
     output_stream = server.context.stream.output_stream
     output_stream_container = output_stream._container
     output_stream_stream_path = output_stream._stream_path
+
+    mm_stream_record = dict(
+        kind="batch_complete",
+        project=context.project,
+        first_timestamp=first_timestamp,
+        last_timestamp=last_timestamp,
+        batch_completion_time=datetime.now(tz=timezone.utc).isoformat(),
+    )
+    for mep_uid in spec.get("model_endpoint_uids", []):
+        mm_stream_record["endpoint_id"] = mep_uid
+        output_stream.push(mm_stream_record, partition_key=mep_uid)
 
     context.logger.info(
         f"Job completed processing {len(df)} rows",
