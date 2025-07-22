@@ -1962,9 +1962,10 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
     """Test get_model_endpoint_monitoring_metrics functionality."""
 
     project_name = "model-monitoring-over-job"
-    image = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc14-68e51a"
+    image = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc14-881868"
 
-    def test_job_from_serving_runtime_with_model_tracking(self):
+    @pytest.mark.parametrize("with_timestamp_column", [False, True])
+    def test_job_from_serving_runtime_with_model_tracking(self, with_timestamp_column):
         function = self.project.set_function(
             func=str(self.assets_path / "function_with_model.py"),
             name="test",
@@ -2006,9 +2007,9 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
                 "projects", f"{self.project_name}/in.csv", body=csv_content
             )
             inputs = {"data": f"v3io:///projects/{self.project_name}/in.csv"}
-            params = dict(
-                # timestamp_column="time",
-            )
+            params = {}
+            if with_timestamp_column:
+                params["timestamp_column"] = "time"
             start_time = datetime.now(timezone.utc)  # any time zone will do
             self.project.run_function(job, inputs=inputs, params=params, local=False)
             end_time = datetime.now(timezone.utc)
@@ -2054,6 +2055,8 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
                         break
             print(f"read_back_records={json.dumps(read_back_records)}")
             assert len(read_back_records) == 4
+            earliest_time_in_dataset = datetime(2020, 1, 1, 1, tzinfo=timezone.utc)
+            latest_time_in_dataset = datetime(2020, 1, 1, 4, tzinfo=timezone.utc)
             for record in read_back_records:
                 assert {
                     "model",
@@ -2069,7 +2072,10 @@ class TestModelMonitoringOverJob(TestMLRunSystemModelMonitoring):
                     == record["resp"]["outputs"][0]
                 )
                 when = datetime.fromisoformat(record["when"])
-                assert end_time > when > start_time
+                if with_timestamp_column:
+                    assert latest_time_in_dataset >= when >= earliest_time_in_dataset
+                else:
+                    assert end_time > when > start_time
         finally:
             v3io_client.close()
 
