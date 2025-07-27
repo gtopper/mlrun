@@ -46,12 +46,24 @@ class MonitoringPreProcessor(storey.MapClass):
         input_path = model_monitoring_data.get(MonitoringData.INPUT_PATH)
 
         result = get_data_from_path(result_path, event.body.get(model, event.body))
+        logger.info(
+            "111 reconstruct_request_resp_fields",
+            result=result,
+        )
         output_schema = model_monitoring_data.get(MonitoringData.OUTPUTS)
         input_schema = model_monitoring_data.get(MonitoringData.INPUTS)
-        logger.debug("output schema retrieved", output_schema=output_schema)
+        logger.info(
+            "output schema retrieved",
+            input_schema=input_schema,
+            output_schema=output_schema,
+        )
         if isinstance(result, dict):
             # transpose by key the outputs:
             outputs = self.transpose_by_key(result, output_schema)
+            logger.info(
+                "111 reconstruct_request_resp_fields (after transpose_by_key)",
+                outputs=outputs,
+            )
             if not output_schema:
                 logger.warn(
                     "Output schema was not provided using Project:log_model or by ModelRunnerStep:add_model order "
