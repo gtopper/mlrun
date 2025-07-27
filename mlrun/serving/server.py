@@ -685,6 +685,9 @@ async def async_execute_graph(
                     f"Event body '{body}' did not contain timestamp column '{timestamp_column}'"
                 )
             event._original_timestamp = body[timestamp_column]
+            if isinstance(event._original_timestamp, datetime):
+                event._original_timestamp = event._original_timestamp.isoformat()
+
         return await server.run(event, context)
 
     if batching and not batch_size:
