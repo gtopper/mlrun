@@ -590,7 +590,7 @@ async def async_execute_graph(
         code = base64.b64decode(code).decode("utf-8")
         with open("user_code.py", "w") as fp:
             fp.write(code)
-        modname = "mlrun.serving.user_code"
+        modname = "user_code"
     else:
         # TODO: find another way to get the local file path, or ensure that MLRUN_EXEC_CODE
         #  gets set in local flow and not just in the remote pod
