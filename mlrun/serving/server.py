@@ -588,7 +588,7 @@ async def async_execute_graph(
     code = os.getenv("MLRUN_EXEC_CODE")
     if code:
         code = base64.b64decode(code).decode("utf-8")
-        with open("user_code.py") as fp:
+        with open("user_code.py", "w") as fp:
             fp.write(code)
         modname = "mlrun.serving.user_code"
     else:
