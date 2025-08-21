@@ -43,7 +43,7 @@ def exec_cli(args, action="run"):
 class TestKubejobRuntime(tests.system.base.TestMLRunSystem):
     project_name = "kubejob-system-test"
 
-    image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc22-fb200a"
+    image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.10.0-rc22-d3cb29"
 
     @pytest.mark.smoke
     def test_deploy_function(self):
@@ -693,11 +693,9 @@ def print_df(df):
 
     @pytest.mark.parametrize(
         "execution_mechanism",
-        # ["naive", "thread_pool", "process_pool", "dedicated_process"],
-        ["dedicated_process"],
+        ["naive", "thread_pool", "process_pool", "dedicated_process"],
     )
-    @pytest.mark.parametrize("local", [False])
-    # @pytest.mark.parametrize("local", [True, False])
+    @pytest.mark.parametrize("local", [True, False])
     def test_job_from_serving_with_mrs(self, execution_mechanism: str, local: bool):
         import mlrun.serving.states
 
@@ -718,7 +716,6 @@ def print_df(df):
         graph_obj = serving_func_obj.set_topology("flow", engine="async")
         graph_obj.to(mode_runner_obj).respond()
         job = serving_func_obj.to_job()
-        # inputs = {"data": "v3io:///bigdata/in.csv"}
         local_input_path = str(self.assets_path / "in.csv")
         if local:
             input_path = local_input_path
