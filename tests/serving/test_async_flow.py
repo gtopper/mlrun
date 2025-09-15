@@ -28,7 +28,7 @@ from mlrun.serving import LLModel, Model, ModelRunnerStep, ModelSelector, Router
 from mlrun.utils import logger
 from tests.conftest import results
 
-from .demo_states import *  # noqa
+# from .demo_states import *  # noqa
 
 
 class _DummyStreamRaiser:
@@ -191,14 +191,36 @@ class MyModel(Model):
 
 
 class MyRemoteModel(Model):
+    print("MyRemoteModel is being initialized")
+    # traceback.print_stack()
+
     def predict(self, body, **kwargs):
         body["url"] = self.model_artifact.model_url
         body["default_config"] = self.model_artifact.default_config
         return body
 
-    async def predict_async(self, body):
+    async def predict_async(self, body, **kwargs):
         body["async_triggered"] = "Async predict was triggered."
         return body
+
+
+def test_class_serialization():
+    import importlib
+    import pickle
+
+    mod = importlib.import_module("serving.test_async_flow")
+
+    instance = MyRemoteModel("my_model")
+
+    inst_cls = instance.__class__  # fix here
+    mod_cls = getattr(mod, "MyRemoteModel")
+
+    print(
+        "inst id:", id(inst_cls), inst_cls, inst_cls.__module__, inst_cls.__qualname__
+    )
+    print("mod  id:", id(mod_cls), mod_cls, mod_cls.__module__, mod_cls.__qualname__)
+
+    pickle.dumps(instance)  # should work if those ids match
 
 
 class MyLLM(LLModel):
@@ -640,12 +662,13 @@ def test_model_runner_with_remote_model():
         model_url="http://localhost:8080/v2/models/mymodel/infer",
         default_config={"model_version": "4"},
     )
-    function = mlrun.new_function("tests", kind="serving")
+    function = mlrun.code_to_function("tests", kind="serving", filename=__file__)
     graph = function.set_topology("flow", engine="async")
     model_runner_step = ModelRunnerStep(name="my_model_runner")
+    # error reproduced also in dedicated process mode
     model_runner_step.add_model(
         model_class="MyRemoteModel",
-        execution_mechanism="naive",
+        execution_mechanism="process_pool",
         endpoint_name="my_endpoint",
         model_artifact=model_artifact,
     )

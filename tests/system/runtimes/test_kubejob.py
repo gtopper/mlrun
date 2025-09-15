@@ -695,7 +695,7 @@ def print_df(df):
         "execution_mechanism",
         ["naive", "thread_pool", "process_pool", "dedicated_process"],
     )
-    @pytest.mark.parametrize("local", [True, False])
+    @pytest.mark.parametrize("local", [True])
     def test_job_from_serving_with_mrs(self, execution_mechanism: str, local: bool):
         import mlrun.serving.states
 

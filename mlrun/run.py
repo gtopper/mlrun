@@ -117,10 +117,7 @@ def function_to_module(code="", workdir=None, secrets=None, silent=False):
         raise ValueError("nothing to run, specify command or function")
 
     command = os.path.join(workdir or "", command)
-    path = Path(command)
-    mod_name = path.name
-    if path.suffix:
-        mod_name = mod_name[: -len(path.suffix)]
+    mod_name = mlrun.utils.helpers.get_module_name_from_path(command)
     spec = imputil.spec_from_file_location(mod_name, command)
     if spec is None:
         raise OSError(f"cannot import from {command!r}")
