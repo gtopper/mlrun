@@ -17,6 +17,7 @@ import json
 import os
 import pathlib
 import socket
+import sys
 import tempfile
 import time
 import typing
@@ -122,6 +123,8 @@ def function_to_module(code="", workdir=None, secrets=None, silent=False):
     if spec is None:
         raise OSError(f"cannot import from {command!r}")
     mod = imputil.module_from_spec(spec)
+    # add to system modules, which can be necessary when running in a MockServer (ML-10937)
+    sys.modules[mod_name] = mod
     spec.loader.exec_module(mod)
 
     return mod
