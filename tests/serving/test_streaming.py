@@ -367,13 +367,11 @@ class TestStreamingErrors:
             server.wait_for_completion()
 
 
-class TestTestStreamMethod:
-    """Tests for the test_stream() method that returns a generator."""
+class TestStreamingGenerator:
+    """Tests for test() returning a generator when streaming is enabled."""
 
-    def test_test_stream_returns_generator(self):
-        """Test that test_stream() returns a generator."""
-        import inspect
-
+    def test_streaming_with_collector_returns_aggregated_list(self):
+        """Test that test() returns an aggregated list when a Collector is used."""
         function = mlrun.new_function("test", kind="serving")
         graph = function.set_topology("flow", engine="async")
 
@@ -386,21 +384,14 @@ class TestTestStreamMethod:
 
         server = function.to_mock_server()
         try:
-            result = server.test_stream("/", body="test")
-            assert inspect.isgenerator(result), "test_stream should return a generator"
-
-            # Consume the generator
-            chunks = list(result)
-            # With collector, we get a single aggregated result
-            assert len(chunks) == 1
-            assert chunks[0] == ["test_chunk_0", "test_chunk_1", "test_chunk_2"]
+            result = server.test("/", body="test")
+            # With collector, we get the aggregated list directly (not a generator)
+            assert result == ["test_chunk_0", "test_chunk_1", "test_chunk_2"]
         finally:
             server.wait_for_completion()
 
-    def test_test_stream_yields_chunks_incrementally(self):
-        """Test that test_stream() yields chunks as they arrive (without collector)."""
-        import inspect
-
+    def test_streaming_yields_chunks_incrementally(self):
+        """Test that test() yields chunks as they arrive (without collector)."""
         function = mlrun.new_function("test", kind="serving")
         graph = function.set_topology("flow", engine="async")
 
@@ -411,39 +402,10 @@ class TestTestStreamMethod:
 
         server = function.to_mock_server()
         try:
-            result = server.test_stream("/", body="test")
-            assert inspect.isgenerator(result), "test_stream should return a generator"
-
-            # Collect chunks one by one
-            chunks = []
-            for chunk in result:
-                chunks.append(chunk)
-
-            # Should get individual chunks, not an aggregated list
-            assert len(chunks) == 3
-            assert chunks == ["test_chunk_0", "test_chunk_1", "test_chunk_2"]
-        finally:
-            server.wait_for_completion()
-
-    def test_test_stream_non_streaming_step(self):
-        """Test that test_stream() works with non-streaming steps (yields single result)."""
-        import inspect
-
-        function = mlrun.new_function("test", kind="serving")
-        graph = function.set_topology("flow", engine="async")
-
-        graph.to(
-            name="processor", class_name="tests.serving.test_streaming.NonStreamingStep"
-        ).respond()
-
-        server = function.to_mock_server()
-        try:
-            result = server.test_stream("/", body="test")
-            assert inspect.isgenerator(result), "test_stream should return a generator"
+            result = server.test("/", body="test")
+            assert inspect.isgenerator(result), "test() should return a generator for streaming"
 
             chunks = list(result)
-            # Non-streaming step yields a single result
-            assert len(chunks) == 1
-            assert chunks[0] == "test_processed"
+            assert chunks == ["test_chunk_0", "test_chunk_1", "test_chunk_2"]
         finally:
             server.wait_for_completion()
