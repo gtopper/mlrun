@@ -1008,20 +1008,27 @@ async def v2_serving_streaming_handler(context, event, get_body=False):
         f"DEBUG streaming_handler: type(response)={type(response)} isasyncgen={inspect.isasyncgen(response)}"
     )
 
-    # Yield chunks from the response (storey already unpacks the body)
+    # Yield chunks from the response
+    # Extract .body from Event objects since nuclio expects bytes/string, not Event objects
     if inspect.isasyncgen(response):
         async for chunk in response:
+            if hasattr(chunk, "body"):
+                chunk = chunk.body
             context.logger.info(
                 f"DEBUG streaming_handler: yielding chunk type={type(chunk)} value={chunk!r}"
             )
             yield chunk
     elif inspect.isgenerator(response):
         for chunk in response:
+            if hasattr(chunk, "body"):
+                chunk = chunk.body
             context.logger.info(
                 f"DEBUG streaming_handler: yielding chunk type={type(chunk)} value={chunk!r}"
             )
             yield chunk
     else:
+        if hasattr(response, "body"):
+            response = response.body
         context.logger.info(
             f"DEBUG streaming_handler: yielding single response type={type(response)} value={response!r}"
         )
