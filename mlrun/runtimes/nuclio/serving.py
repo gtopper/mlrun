@@ -949,6 +949,13 @@ class ServingRuntime(nuclio_function.RemoteRuntime):
                 f"Cannot convert function '{self.metadata.name}' to a job because it has child functions"
             )
 
+        if self.spec.streaming:
+            raise mlrun.errors.MLRunInvalidArgumentError(
+                f"Cannot convert function '{self.metadata.name}' to a job because streaming "
+                f"is enabled. Streaming functions return real-time HTTP responses and cannot "
+                f"run as batch jobs. Please disable streaming with set_streaming(False) first."
+            )
+
         self._add_steps_requirements()
 
         spec = pod_runtime.KubeResourceSpec(

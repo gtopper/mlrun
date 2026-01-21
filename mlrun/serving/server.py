@@ -572,7 +572,10 @@ def v2_serving_init(context, namespace=None):
     streaming_enabled = spec.get("streaming", False)
     if streaming_enabled:
         # Validate that trigger is HTTP when streaming is enabled
-        if hasattr(context, "trigger") and getattr(context.trigger, "kind", "http") != "http":
+        if (
+            hasattr(context, "trigger")
+            and getattr(context.trigger, "kind", "http") != "http"
+        ):
             raise ValueError(
                 f"Streaming is only supported with HTTP triggers, but trigger kind is "
                 f"'{context.trigger.kind}'. Disable streaming or use an HTTP trigger."
@@ -610,6 +613,13 @@ async def async_execute_graph(
         )
     run_call_count = 0
     spec = mlrun.utils.get_serving_spec()
+
+    if spec.get("streaming"):
+        raise MLRunInvalidArgumentError(
+            "Cannot execute graph as a job when streaming is enabled. "
+            "Streaming functions return real-time HTTP responses."
+        )
+
     modname = None
     code = os.getenv("MLRUN_EXEC_CODE")
     if code:
@@ -1056,7 +1066,9 @@ def _format_streaming_chunk(context, chunk, get_body):
 
     if body and not isinstance(body, str | bytes):
         body = json.dumps(body)
-        return context.Response(body=body, content_type="application/json", status_code=200)
+        return context.Response(
+            body=body, content_type="application/json", status_code=200
+        )
 
     return body
 

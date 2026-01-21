@@ -121,7 +121,9 @@ class TestAddTriggerWithStreaming:
             mlrun.errors.MLRunInvalidArgumentError,
             match="Cannot add non-HTTP trigger",
         ):
-            function.add_trigger("my_kafka", {"kind": "kafka", "url": "kafka://localhost"})
+            function.add_trigger(
+                "my_kafka", {"kind": "kafka", "url": "kafka://localhost"}
+            )
 
     def test_add_http_trigger_when_streaming_enabled(self):
         """Test that adding HTTP trigger works when streaming is enabled."""
@@ -140,6 +142,32 @@ class TestAddTriggerWithStreaming:
 
         # Should not raise error
         function.add_trigger("my_kafka", {"kind": "kafka", "url": "kafka://localhost"})
+
+
+class TestStreamingToJob:
+    """Tests for to_job() validation with streaming."""
+
+    def test_to_job_fails_when_streaming_enabled(self):
+        """Test that to_job() fails when streaming is enabled."""
+        function = mlrun.new_function("test", kind="serving")
+        function.set_topology("flow", engine="async")
+        function.set_streaming(enabled=True)
+
+        with pytest.raises(
+            mlrun.errors.MLRunInvalidArgumentError,
+            match="streaming is enabled",
+        ):
+            function.to_job()
+
+    def test_to_job_works_when_streaming_disabled(self):
+        """Test that to_job() works when streaming is disabled."""
+        function = mlrun.new_function("test", kind="serving")
+        function.set_topology("flow", engine="async")
+        # streaming is None/False by default
+
+        # Should not raise error
+        job = function.to_job()
+        assert job
 
 
 class TestStreamingHandler:
@@ -214,7 +242,9 @@ class TestStreamingEndToEnd:
         graph = function.set_topology("flow", engine="async")
 
         # Add a streaming step followed by a collector
-        graph.to(name="streamer", class_name="tests.serving.test_streaming.StreamingStep")
+        graph.to(
+            name="streamer", class_name="tests.serving.test_streaming.StreamingStep"
+        )
         graph.add_step(
             name="collector",
             class_name="storey.Collector",
@@ -255,7 +285,9 @@ class TestStreamingEndToEnd:
         graph = function.set_topology("flow", engine="async")
 
         # streaming step -> non-streaming step -> collector
-        graph.to(name="streamer", class_name="tests.serving.test_streaming.StreamingStep")
+        graph.to(
+            name="streamer", class_name="tests.serving.test_streaming.StreamingStep"
+        )
         graph.add_step(
             name="processor",
             class_name="tests.serving.test_streaming.NonStreamingStep",
@@ -318,7 +350,9 @@ class TestStreamingErrors:
         graph = function.set_topology("flow", engine="async")
 
         # Two streaming steps in sequence without collector
-        graph.to(name="streamer1", class_name="tests.serving.test_streaming.StreamingStep")
+        graph.to(
+            name="streamer1", class_name="tests.serving.test_streaming.StreamingStep"
+        )
         graph.add_step(
             name="streamer2",
             class_name="tests.serving.test_streaming.DoubleStreamer",
@@ -339,7 +373,11 @@ class TestStreamingErrors:
         graph = function.set_topology("flow", engine="async")
 
         # streaming -> collector -> streaming -> collector
-        graph.to(name="streamer1", class_name="tests.serving.test_streaming.StreamingStep", num_chunks=2)
+        graph.to(
+            name="streamer1",
+            class_name="tests.serving.test_streaming.StreamingStep",
+            num_chunks=2,
+        )
         graph.add_step(
             name="collector1",
             class_name="storey.Collector",
@@ -375,7 +413,9 @@ class TestStreamingGenerator:
         function = mlrun.new_function("test", kind="serving")
         graph = function.set_topology("flow", engine="async")
 
-        graph.to(name="streamer", class_name="tests.serving.test_streaming.StreamingStep")
+        graph.to(
+            name="streamer", class_name="tests.serving.test_streaming.StreamingStep"
+        )
         graph.add_step(
             name="collector",
             class_name="storey.Collector",
@@ -403,7 +443,9 @@ class TestStreamingGenerator:
         server = function.to_mock_server()
         try:
             result = server.test("/", body="test")
-            assert inspect.isgenerator(result), "test() should return a generator for streaming"
+            assert inspect.isgenerator(
+                result
+            ), "test() should return a generator for streaming"
 
             chunks = list(result)
             assert chunks == ["test_chunk_0", "test_chunk_1", "test_chunk_2"]
