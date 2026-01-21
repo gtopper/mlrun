@@ -316,6 +316,10 @@ class GraphServer(ModelObj):
             if event_path_key in event.headers:
                 event.path = event.headers.get(event_path_key)
 
+        context.logger.info(
+            f"DEBUG run: event.body type={type(event.body)} value={event.body!r}"
+        )
+
         if isinstance(event.body, str | bytes) and (
             not event.content_type or event.content_type in ["json", "application/json"]
         ):
@@ -351,6 +355,9 @@ class GraphServer(ModelObj):
 
     async def _process_async_response(self, context, response, get_body):
         result = await response
+        context.logger.info(
+            f"DEBUG _process_async_response: type(result)={type(result)} isasyncgen={inspect.isasyncgen(result)}"
+        )
         # Check if the awaited result is a generator (stream response)
         if inspect.isgenerator(result) or inspect.isasyncgen(result):
             return result
@@ -997,14 +1004,27 @@ async def v2_serving_streaming_handler(context, event, get_body=False):
     if asyncio.iscoroutine(response):
         response = await response
 
+    context.logger.info(
+        f"DEBUG streaming_handler: type(response)={type(response)} isasyncgen={inspect.isasyncgen(response)}"
+    )
+
     # Yield chunks from the response (storey already unpacks the body)
     if inspect.isasyncgen(response):
         async for chunk in response:
+            context.logger.info(
+                f"DEBUG streaming_handler: yielding chunk type={type(chunk)} value={chunk!r}"
+            )
             yield chunk
     elif inspect.isgenerator(response):
         for chunk in response:
+            context.logger.info(
+                f"DEBUG streaming_handler: yielding chunk type={type(chunk)} value={chunk!r}"
+            )
             yield chunk
     else:
+        context.logger.info(
+            f"DEBUG streaming_handler: yielding single response type={type(response)} value={response!r}"
+        )
         yield response
 
 
