@@ -951,8 +951,11 @@ def _set_callbacks(server, context):
         context.platform.set_drain_callback(drain_callback)
 
 
-def v2_serving_handler(context, event, get_body=False):
-    """hook for nuclio handler()"""
+def _preprocess_event(context, event):
+    """Preprocess event before running through the graph.
+
+    Handles Nuclio workarounds for empty body and stream path setup.
+    """
     if context._server.http_trigger:
         # Workaround for a Nuclio bug where it sometimes passes b'' instead of None due to dirty memory
         if event.body == b"":
@@ -973,103 +976,48 @@ def v2_serving_handler(context, event, get_body=False):
     ):
         event.path = "/"
 
+
+def v2_serving_handler(context, event, get_body=False):
+    """hook for nuclio handler()"""
+    _preprocess_event(context, event)
     return context._server.run(event, context, get_body)
 
 
-def v2_serving_streaming_handler(context, event, get_body=False):
-    """Streaming handler for nuclio that yields results as they arrive.
+async def v2_serving_streaming_handler(context, event, get_body=False):
+    """Async streaming handler for nuclio that yields results as they arrive.
 
     This handler is used when streaming mode is enabled on the serving function.
     It yields results from streaming steps in the graph as they are produced,
     allowing for real-time streaming responses (e.g., for LLM token streaming).
 
-    The handler is a generator function that nuclio recognizes and handles
+    The handler is an async generator function that nuclio recognizes and handles
     appropriately, streaming responses back to the HTTP client.
     """
-    if context._server.http_trigger:
-        # Workaround for a Nuclio bug where it sometimes passes b'' instead of None due to dirty memory
-        if event.body == b"":
-            event.body = None
-
-    # original path is saved in stream_path so it can be used by explicit ack
-    event.stream_path = getattr(event, "topic", event.path)
-    if hasattr(event, "trigger") and event.trigger.kind in (
-        "kafka",
-        "kafka-cluster",
-        "v3ioStream",
-        "v3io-stream",
-        "rabbit-mq",
-        "rabbitMq",
-    ):
-        event.path = "/"
+    _preprocess_event(context, event)
 
     # Run the event through the graph and get the response
-    # For streaming, this returns a generator from storey's await_result()
     response = context._server.run(event, context, get_body)
 
-    # Check if the response is a generator (streaming response)
+    # Unwrap coroutines to get the actual result
+    if asyncio.iscoroutine(response):
+        response = await response
+
+    # Yield chunks from the response
+    async for chunk in _iterate_response_chunks(response):
+        yield chunk.body
+
+
+async def _iterate_response_chunks(response):
+    """Async iterate over response chunks, handling sync/async generators and single values."""
     if inspect.isgenerator(response):
-        # Yield each chunk from the streaming response
-        for chunk in response:
-            yield _format_streaming_chunk(context, chunk, get_body)
-    elif asyncio.iscoroutine(response):
-        # Handle async response - need to await and check if result is a generator
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(response)
-        if inspect.isgenerator(result):
-            for chunk in result:
-                yield _format_streaming_chunk(context, chunk, get_body)
-        elif inspect.isasyncgen(result):
-            # Async generator - need to iterate asynchronously
-            async def _consume_async_gen():
-                async for chunk in result:
-                    yield chunk
-
-            for chunk in loop.run_until_complete(_collect_async_gen(result)):
-                yield _format_streaming_chunk(context, chunk, get_body)
-        else:
-            # Not a streaming response, yield the single result
-            yield _format_streaming_chunk(context, result, get_body)
+        for item in response:
+            yield item
     elif inspect.isasyncgen(response):
-        # Async generator returned directly
-        loop = asyncio.get_event_loop()
-        for chunk in loop.run_until_complete(_collect_async_gen(response)):
-            yield _format_streaming_chunk(context, chunk, get_body)
+        async for item in response:
+            yield item
     else:
-        # Non-streaming response, yield as single result
+        # Single value - yield as-is
         yield response
-
-
-async def _collect_async_gen(async_gen):
-    """Collect all items from an async generator into a list."""
-    items = []
-    async for item in async_gen:
-        items.append(item)
-    return items
-
-
-def _format_streaming_chunk(context, chunk, get_body):
-    """Format a streaming chunk for the response.
-
-    If the chunk is already a Response object, return it as-is.
-    Otherwise, format it appropriately.
-    """
-    if hasattr(chunk, "body"):
-        # Already an event-like object with body
-        body = chunk.body
-    else:
-        body = chunk
-
-    if get_body:
-        return body
-
-    if body and not isinstance(body, str | bytes):
-        body = json.dumps(body)
-        return context.Response(
-            body=body, content_type="application/json", status_code=200
-        )
-
-    return body
 
 
 def create_graph_server(
