@@ -613,13 +613,6 @@ async def async_execute_graph(
         )
     run_call_count = 0
     spec = mlrun.utils.get_serving_spec()
-
-    if spec.get("streaming"):
-        raise MLRunInvalidArgumentError(
-            "Cannot execute graph as a job when streaming is enabled. "
-            "Streaming functions return real-time HTTP responses."
-        )
-
     modname = None
     code = os.getenv("MLRUN_EXEC_CODE")
     if code:
