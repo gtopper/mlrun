@@ -1002,21 +1002,14 @@ async def v2_serving_streaming_handler(context, event, get_body=False):
     if asyncio.iscoroutine(response):
         response = await response
 
-    # Yield chunks from the response
-    async for chunk in _iterate_response_chunks(response):
-        yield chunk.body
-
-
-async def _iterate_response_chunks(response):
-    """Async iterate over response chunks, handling sync/async generators and single values."""
-    if inspect.isgenerator(response):
-        for item in response:
-            yield item
-    elif inspect.isasyncgen(response):
-        async for item in response:
-            yield item
+    # Yield chunks from the response (storey already unpacks the body)
+    if inspect.isasyncgen(response):
+        async for chunk in response:
+            yield chunk
+    elif inspect.isgenerator(response):
+        for chunk in response:
+            yield chunk
     else:
-        # Single value - yield as-is
         yield response
 
 
