@@ -173,9 +173,9 @@ class TestStreamingToJob:
 class TestStreamingHandler:
     """Tests for v2_serving_streaming_handler."""
 
-    def test_streaming_handler_is_generator(self):
-        """Test that v2_serving_streaming_handler is a generator function."""
-        assert inspect.isgeneratorfunction(v2_serving_streaming_handler)
+    def test_streaming_handler_is_async_generator(self):
+        """Test that v2_serving_streaming_handler is an async generator function."""
+        assert inspect.isasyncgenfunction(v2_serving_streaming_handler)
 
     def test_regular_handler_is_not_generator(self):
         """Test that v2_serving_handler is not a generator function."""
