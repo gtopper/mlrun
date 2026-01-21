@@ -355,6 +355,10 @@ class GraphServer(ModelObj):
 
     async def _process_async_response(self, context, response, get_body):
         result = await response
+        context.logger.info(
+            f"111 type(result)={type(result)} inspect.isgenerator(result)={inspect.isgenerator(result)} "
+            f"inspect.isasyncgen(result)={inspect.isasyncgen(result)}"
+        )
         # Check if the awaited result is a generator (stream response)
         if inspect.isgenerator(result) or inspect.isasyncgen(result):
             return result
