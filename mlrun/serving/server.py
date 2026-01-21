@@ -345,7 +345,7 @@ class GraphServer(ModelObj):
             )
 
         # Check for generator first (streaming response)
-        if inspect.isgenerator(response):
+        if inspect.isgenerator(response) or inspect.isasyncgen(response):
             # Streaming response - return generator directly for streaming handling
             return response
         elif asyncio.iscoroutine(response):
