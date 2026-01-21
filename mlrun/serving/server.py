@@ -344,21 +344,16 @@ class GraphServer(ModelObj):
                 body=message, content_type="text/plain", status_code=400
             )
 
-        # Check for generator first (streaming response)
-        if inspect.isgenerator(response) or inspect.isasyncgen(response):
-            # Streaming response - return generator directly for streaming handling
-            return response
-        elif asyncio.iscoroutine(response):
+        if asyncio.iscoroutine(response):
             return self._process_async_response(context, response, get_body)
         else:
             return self._process_response(context, response, get_body)
 
     async def _process_async_response(self, context, response, get_body):
         result = await response
-        body = result.body
         # Check if the awaited result is a generator (stream response)
-        if inspect.isgenerator(body) or inspect.isasyncgen(body):
-            return body
+        if inspect.isgenerator(result) or inspect.isasyncgen(result):
+            return result
         return self._process_response(context, result, get_body)
 
     def _process_response(self, context, response, get_body):
