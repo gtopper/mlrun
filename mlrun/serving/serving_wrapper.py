@@ -27,6 +27,9 @@ async def handler(context, event):
     if inspect.isasyncgen(result):
         async for chunk in result:
             yield chunk
+    elif inspect.isgenerator(result):
+        for chunk in result:
+            yield chunk
     elif asyncio.iscoroutine(result):
         yield await result
     else:
