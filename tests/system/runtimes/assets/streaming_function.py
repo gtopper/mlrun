@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import time
+import asyncio
 
 
 class StreamingStep:
@@ -22,8 +22,12 @@ class StreamingStep:
         self.name = name
         self.num_chunks = num_chunks
 
-    def do(self, x):
+    async def do(self, x):
         """Yield multiple chunks for a single input."""
+
+        if isinstance(x, bytes):
+            x = x.decode("utf-8")
+
         for i in range(self.num_chunks):
-            time.sleep(1)
+            await asyncio.sleep(1)
             yield f"{x}_chunk_{i}"
