@@ -25,12 +25,21 @@ def init_context(context):
 async def handler(context, event):
     result = context.mlrun_handler(context, event)
     if inspect.isasyncgen(result):
+        context.logger.info("result is an async generator")
         async for chunk in result:
+            context.logger.info(f"yielding chunk {chunk}")
             yield chunk
     elif inspect.isgenerator(result):
+        context.logger.info("result is a sync generator")
         for chunk in result:
+            context.logger.info(f"yielding chunk {chunk}")
             yield chunk
     elif asyncio.iscoroutine(result):
-        yield await result
+        context.logger.info("result is a coroutine")
+        r = await result
+        context.logger.info(f"yielding {r}")
+        yield r
     else:
+        context.logger.info("result is a value")
+        context.logger.info(f"yielding {result}")
         yield result
