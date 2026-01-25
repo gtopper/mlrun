@@ -306,7 +306,7 @@ class GraphServer(ModelObj):
             else:
                 yield chunk
 
-    def run(self, event, context=None, get_body=False, extra_args=None):
+    def run(self, event, context=None, get_body: bool = False, extra_args=None):
         server_context = self.context
         context = context or server_context
         event.content_type = event.content_type or self.default_content_type or ""
@@ -348,26 +348,30 @@ class GraphServer(ModelObj):
                 body=message, content_type="text/plain", status_code=400
             )
 
-        if asyncio.iscoroutine(response):
+        return self._process_response(context, get_body, response)
+
+    def _process_response(self, context, get_body: bool, response):
+        if inspect.isgenerator(response):
+            return self._process_streaming_response(context, response, get_body)
+        elif inspect.isasyncgen(response):
+            return self._process_async_streaming_response(context, response, get_body)
+        elif asyncio.iscoroutine(response):
             return self._process_async_response(context, response, get_body)
         else:
-            return self._process_response(context, response, get_body)
+            return self._process_sync_response(context, response, get_body)
 
     async def _process_async_response(self, context, response, get_body):
-        result = await response
-        context.logger.info(
-            f"DEBUG _process_async_response: type(result)={type(result)} isasyncgen={inspect.isasyncgen(result)}"
-        )
-        if inspect.isasyncgen(result):
-            async for chunk in result:
-                yield self._process_response(context, chunk, get_body)
-        elif inspect.isgenerator(result):
-            for chunk in result:
-                yield self._process_response(context, chunk, get_body)
-        else:
-            yield self._process_response(context, result, get_body)
+        return self._process_sync_response(context, await response, get_body)
 
-    def _process_response(self, context, response, get_body):
+    def _process_streaming_response(self, context, response, get_body):
+        for chunk in response:
+            yield self._process_sync_response(context, chunk, get_body)
+
+    async def _process_async_streaming_response(self, context, response, get_body):
+        async for chunk in response:
+            yield self._process_sync_response(context, chunk, get_body)
+
+    def _process_sync_response(self, context, response, get_body):
         body = response.body
 
         # Check if body is a generator (stream response)
