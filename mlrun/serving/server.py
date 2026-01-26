@@ -351,7 +351,7 @@ class GraphServer(ModelObj):
         if inspect.isgenerator(response):
             return self._process_streaming_response(context, response, get_body)
         elif inspect.isasyncgen(response) or asyncio.iscoroutine(response):
-            return self._process_async_response(context, get_body, response)
+            return self._process_async_response(context, response, get_body)
         else:
             return self._process_single_response(context, response, get_body)
 
@@ -362,17 +362,20 @@ class GraphServer(ModelObj):
         else:
             yield self._process_single_response(context, response, get_body)
 
-    async def _process_async_response(self, context, get_body: bool, response):
+    async def _process_async_response(self, context, response, get_body: bool):
         if inspect.isgenerator(response):
             for chunk in response:
-                yield self._process_sync_response(context, chunk, get_body)
+                yield self._process_single_response(context, chunk, get_body)
         elif inspect.isasyncgen(response):
             async for chunk in response:
-                yield self._process_sync_response(context, chunk, get_body)
+                yield self._process_single_response(context, chunk, get_body)
         elif asyncio.iscoroutine(response):
-            yield self._process_async_response(context, await response, get_body)
+            async for res in self._process_async_response(
+                context, await response, get_body
+            ):
+                yield res
         else:
-            yield self._process_sync_response(context, response, get_body)
+            yield self._process_single_response(context, response, get_body)
 
     def _process_streaming_response(self, context, response, get_body):
         for chunk in response:
