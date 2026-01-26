@@ -18,6 +18,7 @@ import asyncio
 import base64
 import copy
 import importlib
+import inspect
 import json
 import os
 import socket
@@ -291,9 +292,21 @@ class GraphServer(ModelObj):
         resp = self.run(event, get_body=get_body)
         if hasattr(resp, "status_code") and resp.status_code >= 300 and not silent:
             raise RuntimeError(f"failed ({resp.status_code}): {resp.body}")
+
+        # If streaming response (generator), return generator that unwraps chunks
+        if inspect.isgenerator(resp):
+            return self._unwrap_streaming_response(resp)
         return resp
 
-    def run(self, event, context=None, get_body=False, extra_args=None):
+    def _unwrap_streaming_response(self, generator):
+        """Unwrap streaming chunks, yielding the body of each chunk."""
+        for chunk in generator:
+            if hasattr(chunk, "body"):
+                yield chunk.body
+            else:
+                yield chunk
+
+    def run(self, event, context=None, get_body: bool = False, extra_args=None):
         server_context = self.context
         context = context or server_context
         event.content_type = event.content_type or self.default_content_type or ""
@@ -331,16 +344,35 @@ class GraphServer(ModelObj):
                 body=message, content_type="text/plain", status_code=400
             )
 
-        if asyncio.iscoroutine(response):
+        if inspect.isgenerator(response):
+            return self._process_streaming_response(context, response, get_body)
+        elif inspect.isasyncgen(response) or asyncio.iscoroutine(response):
             return self._process_async_response(context, response, get_body)
         else:
-            return self._process_response(context, response, get_body)
+            return self._process_single_response(context, response, get_body)
 
-    async def _process_async_response(self, context, response, get_body):
-        return self._process_response(context, await response, get_body)
+    async def _process_async_response(self, context, response, get_body: bool):
+        if inspect.isgenerator(response):
+            for chunk in response:
+                yield self._process_single_response(context, chunk, get_body)
+        elif inspect.isasyncgen(response):
+            async for chunk in response:
+                yield self._process_single_response(context, chunk, get_body)
+        elif asyncio.iscoroutine(response):
+            async for res in self._process_async_response(
+                context, await response, get_body
+            ):
+                yield res
+        else:
+            yield self._process_single_response(context, response, get_body)
 
-    def _process_response(self, context, response, get_body):
+    def _process_streaming_response(self, context, response, get_body):
+        for chunk in response:
+            yield self._process_single_response(context, chunk, get_body)
+
+    def _process_single_response(self, context, response, get_body):
         body = response.body
+
         if (
             isinstance(context, MLClientCtx)
             or isinstance(body, context.Response)
@@ -546,8 +578,24 @@ def v2_serving_init(context, namespace=None):
     )
     context.logger.info("Initializing graph steps")
     server.init_object(namespace or get_caller_globals())
-    # set the handler hook to point to our handler
-    setattr(context, "mlrun_handler", v2_serving_handler)
+
+    # Determine streaming mode and select the appropriate handler
+    streaming_enabled = spec.get("streaming", False)
+    if streaming_enabled:
+        # Validate that trigger is HTTP when streaming is enabled
+        if (
+            hasattr(context, "trigger")
+            and getattr(context.trigger, "kind", "http") != "http"
+        ):
+            raise ValueError(
+                f"Streaming is only supported with HTTP triggers, but trigger kind is "
+                f"'{context.trigger.kind}'. Disable streaming or use an HTTP trigger."
+            )
+        context.logger.info("Streaming mode enabled, using streaming handler")
+        setattr(context, "mlrun_handler", v2_serving_streaming_handler)
+    else:
+        setattr(context, "mlrun_handler", v2_serving_handler)
+
     setattr(context, "_server", server)
     context.logger.info_with("Serving was initialized", verbose=server.verbose)
     if server.verbose:
@@ -908,8 +956,11 @@ def _set_callbacks(server, context):
         context.platform.set_drain_callback(drain_callback)
 
 
-def v2_serving_handler(context, event, get_body=False):
-    """hook for nuclio handler()"""
+def _preprocess_event(context, event):
+    """Preprocess event before running through the graph.
+
+    Handles Nuclio workarounds for empty body and stream path setup.
+    """
     if context._server.http_trigger:
         # Workaround for a Nuclio bug where it sometimes passes b'' instead of None due to dirty memory
         if event.body == b"":
@@ -930,7 +981,48 @@ def v2_serving_handler(context, event, get_body=False):
     ):
         event.path = "/"
 
+
+def v2_serving_handler(context, event, get_body=False):
+    """hook for nuclio handler()"""
+    _preprocess_event(context, event)
     return context._server.run(event, context, get_body)
+
+
+async def v2_serving_streaming_handler(context, event, get_body=False):
+    """Async streaming handler for nuclio that yields results as they arrive.
+
+    This handler is used when streaming mode is enabled on the serving function.
+    It yields results from streaming steps in the graph as they are produced,
+    allowing for real-time streaming responses (e.g., for LLM token streaming).
+
+    The handler is an async generator function that nuclio recognizes and handles
+    appropriately, streaming responses back to the HTTP client.
+    """
+    _preprocess_event(context, event)
+
+    # Run the event through the graph and get the response
+    response = context._server.run(event, context, get_body)
+
+    # Unwrap coroutines to get the actual result
+    if asyncio.iscoroutine(response):
+        response = await response
+
+    # Yield chunks from the response
+    # Extract .body from Event objects since nuclio expects bytes/string, not Event objects
+    if inspect.isasyncgen(response):
+        async for chunk in response:
+            if hasattr(chunk, "body"):
+                chunk = chunk.body
+            yield chunk
+    elif inspect.isgenerator(response):
+        for chunk in response:
+            if hasattr(chunk, "body"):
+                chunk = chunk.body
+            yield chunk
+    else:
+        if hasattr(response, "body"):
+            response = response.body
+        yield response
 
 
 def create_graph_server(
