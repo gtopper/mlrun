@@ -625,7 +625,7 @@ class TestNuclioRuntime(TestMLRunSystemModelMonitoring):
         # Make a streaming request to verify chunked response
         url = function.get_url()
         resp = requests.post(url, data="test", stream=True)
-        print(f"Got response: {resp}")
+        self._logger.info(f"Got response: {resp}")
         assert resp.ok, f"Request failed: {resp.status_code} {resp.text}"
 
         # Verify the response uses chunked transfer encoding (streaming)
@@ -640,7 +640,7 @@ class TestNuclioRuntime(TestMLRunSystemModelMonitoring):
         for chunk in resp.iter_content(decode_unicode=True, chunk_size=1024):
             end = time.monotonic()
             duration = end - start
-            print(f"Received chunk after {duration :.2f} seconds: {chunk!r}")
+            self._logger.info(f"Received chunk after {duration :.2f} seconds: {chunk}")
             # TODO: Enable once NUC-720 is fixed
             # assert (
             #         0.5 < duration < 1.5
@@ -648,7 +648,8 @@ class TestNuclioRuntime(TestMLRunSystemModelMonitoring):
             chunks.append(chunk)
             start = time.monotonic()
 
-        # TODO: Enable once NUC-720 is fixed
+        # TODO: Remove and enable the commented-out line instead once NUC-720 is fixed
+        assert len(chunks) > 0, "Expected at least one streaming chunk"
         # assert chunks == ["test_chunk_0", "test_chunk_1", "test_chunk_2"]
 
     @pytest.mark.parametrize("with_object", [True, False])
