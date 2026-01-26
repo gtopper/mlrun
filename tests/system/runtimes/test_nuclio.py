@@ -45,7 +45,7 @@ class TestNuclioRuntime(TestMLRunSystemModelMonitoring):
     project_name = "test-nuclio-runtime"
 
     # image: str = "artifactory.iguazeng.com:10557/galt/mlrun:1.11.0-rc19-9d2b57"
-    image: str = "galtopperbnkk67393/mlrun:1.11.0-rc19-37e81c"
+    image: str = "galtopperbnkk67393/mlrun:1.11.0-rc19-c75797"
 
     def test_deploy_function_with_error_handler(self):
         code_path = str(self.assets_path / "function-with-catcher.py")

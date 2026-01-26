@@ -372,11 +372,11 @@ class GraphServer(ModelObj):
             yield self._process_sync_response(context, chunk, get_body)
 
     def _process_sync_response(self, context, response, get_body):
-        body = response.body
-
         # Check if body is a generator (stream response)
-        if inspect.isgenerator(body) or inspect.isasyncgen(body):
-            return body
+        if inspect.isgenerator(response) or inspect.isasyncgen(response):
+            return response
+
+        body = response.body
 
         if (
             isinstance(context, MLClientCtx)
