@@ -3997,7 +3997,10 @@ def _init_async_objects(context, steps, root):
                 and step.responder
             ):
                 # if responder step (return result), add Complete()
-                step.async_object.to(storey.Complete(full_event=True))
+                # For streaming, use full_event=False so storey yields just the body
+                # For non-streaming, use full_event=True to get the full Event object
+                streaming = getattr(context._server, "streaming", False)
+                step.async_object.to(storey.Complete(full_event=not streaming))
                 wait_for_result = True
 
     source_args = context.get_param("source_args", {})
