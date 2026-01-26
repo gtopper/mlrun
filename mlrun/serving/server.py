@@ -355,13 +355,6 @@ class GraphServer(ModelObj):
         else:
             return self._process_single_response(context, response, get_body)
 
-    def _process_sync_response(self, context, get_body: bool, response):
-        if inspect.isgenerator(response):
-            for chunk in response:
-                yield self._process_single_response(context, chunk, get_body)
-        else:
-            yield self._process_single_response(context, response, get_body)
-
     async def _process_async_response(self, context, response, get_body: bool):
         if inspect.isgenerator(response):
             for chunk in response:
