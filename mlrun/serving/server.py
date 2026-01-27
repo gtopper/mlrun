@@ -372,22 +372,19 @@ class GraphServer(ModelObj):
             yield self._process_single_response(context, chunk, get_body)
 
     def _process_single_response(self, context, response, get_body):
-        # Extract body from Event objects, or use response directly if it's already the body
-        body = response.body if hasattr(response, "body") else response
-
         if (
             isinstance(context, MLClientCtx)
-            or isinstance(body, context.Response)
+            or isinstance(response, context.Response)
             or get_body
         ):
-            return body
+            return response
 
-        if body and not isinstance(body, str | bytes):
-            body = json.dumps(body)
+        if response and not isinstance(response, str | bytes):
+            body = json.dumps(response)
             return context.Response(
                 body=body, content_type="application/json", status_code=200
             )
-        return body
+        return response
 
     def wait_for_completion(self):
         """wait for async operation to complete"""
