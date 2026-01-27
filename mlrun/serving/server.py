@@ -1012,7 +1012,7 @@ async def v2_serving_streaming_handler(context, event, get_body=False):
         response = await response
 
     # Yield chunks from the response
-    # With streaming enabled, storey's Complete uses full_event=False, so chunks
+    # With streaming enabled, Complete is configured with full_event=False, so chunks
     # are already just the body (processed by _process_single_response)
     if inspect.isasyncgen(response):
         async for chunk in response:
