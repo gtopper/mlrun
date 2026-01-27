@@ -987,7 +987,6 @@ def _preprocess_event(context, event):
 
 
 def v2_serving_handler(context, event, get_body=False):
-    """hook for nuclio handler()"""
     _preprocess_event(context, event)
     return context._server.run(event, context, get_body)
 
