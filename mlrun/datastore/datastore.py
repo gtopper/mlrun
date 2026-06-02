@@ -245,6 +245,15 @@ class StoreManager:
     ) -> (BaseRemoteClient, str, str):
         # The cache can be an empty dictionary ({}), even if it is a _stores object
         cache = cache if cache is not None else {}
+        # Inside a ``Client.session()`` with no explicit caller secrets, inherit
+        # the active client's credentials so data-plane ops use the session's
+        # bearer rather than the host process's env. Skip the cache for the
+        # same reason ``is_running_as_api()`` does: per-user creds must not
+        # cross requests.
+        if not secrets:
+            active = mlrun.client.get_active_client()
+            if active is not None:
+                secrets = active._data_plane_secrets() or None
         schema, endpoint, parsed_url = parse_url(url)
         subpath = parsed_url.path
         cache_key = f"{schema}://{endpoint}" if endpoint else f"{schema}://"

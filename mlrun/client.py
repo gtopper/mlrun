@@ -98,8 +98,22 @@ class Client:
         from mlrun.db.httpdb import HTTPRunDB
         from mlrun.projects.pipelines import _PipelineContext
 
+        self._credentials = credentials
         self._http_db = HTTPRunDB(config.dbpath, credentials=credentials)
         self._pipeline_context = _PipelineContext()
+
+    def _data_plane_secrets(self) -> dict[str, str]:
+        """Map the client's credentials onto data-plane secret keys.
+
+        Iguazio shares a single access key between MLRun's control plane and
+        V3IO's data plane, so a ``token=`` client also authenticates
+        ``v3io://`` uploads/reads under that bearer. Returns ``{}`` for
+        ``use_env=True`` (legacy fallthrough) and for basic auth (no V3IO
+        equivalent).
+        """
+        if self._credentials.token is not None:
+            return {"V3IO_ACCESS_KEY": self._credentials.token}
+        return {}
 
     @contextmanager
     def session(self) -> Iterator[Client]:
