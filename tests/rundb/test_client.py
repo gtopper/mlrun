@@ -112,6 +112,32 @@ def test_extra_header_cannot_override_authorization():
     assert headers.get("authorization") == "Bearer my-token"
 
 
+def test_jwt_token_routes_as_bearer_not_session():
+    """JWT -> bearer header, access key/session -> session cookie."""
+    jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdmMtYWNjdCJ9.ab-cd_ef"
+    client = Client(credentials=Credentials(token=jwt))
+    client._http_db.session = unittest.mock.Mock()
+
+    with client.session():
+        mlrun.get_run_db().api_call("GET", "some-path")
+
+    request_kwargs = client._http_db.session.request.call_args[1]
+    assert request_kwargs.get("headers", {}).get("authorization") == f"Bearer {jwt}"
+    assert "cookies" not in request_kwargs
+
+    # Access key/control session still routes as a cookie.
+    access_key = "946b0749-5c40-4837-a4ac-341d295bfaf7"
+    session_client = Client(credentials=Credentials(token=access_key))
+    session_client._http_db.session = unittest.mock.Mock()
+
+    with session_client.session():
+        mlrun.get_run_db().api_call("GET", "some-path")
+
+    session_kwargs = session_client._http_db.session.request.call_args[1]
+    assert "session" in session_kwargs.get("cookies", {})
+    assert session_kwargs.get("headers", {}).get("authorization") is None
+
+
 def test_credentials_use_env_matches_legacy_singleton_auth(monkeypatch):
     """``Credentials(use_env=True)`` resolves auth like the legacy singleton."""
     monkeypatch.setenv("V3IO_ACCESS_KEY", "host-process-token")
