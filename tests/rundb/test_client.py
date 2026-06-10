@@ -62,7 +62,7 @@ def test_session_carries_client_credentials_to_requests():
 
 
 def test_session_carries_extra_headers_to_requests():
-    """``Credentials.extra_headers`` are attached to every request."""
+    """``Credentials.extra_headers`` are added to each request."""
     client = Client(
         credentials=Credentials(
             token="my-token", extra_headers={"X-IGZ-Authenticator-Kind": "sa"}
@@ -79,7 +79,7 @@ def test_session_carries_extra_headers_to_requests():
 
 
 def test_per_call_header_overrides_default_extra_header():
-    """A per-call ``headers=`` value wins over a ``Credentials`` default."""
+    """Per-call ``headers=`` values override ``Credentials`` defaults."""
     client = Client(
         credentials=Credentials(
             token="my-token", extra_headers={"X-IGZ-Authenticator-Kind": "sa"}
@@ -94,6 +94,22 @@ def test_per_call_header_overrides_default_extra_header():
 
     headers = client._http_db.session.request.call_args[1].get("headers", {})
     assert headers.get("X-IGZ-Authenticator-Kind") == "override"
+
+
+def test_extra_header_cannot_override_authorization():
+    """``extra_headers`` must not override the auth header."""
+    client = Client(
+        credentials=Credentials(
+            token="my-token", extra_headers={"Authorization": "Bearer spoofed"}
+        )
+    )
+    client._http_db.session = unittest.mock.Mock()
+
+    with client.session():
+        mlrun.get_run_db().api_call("GET", "some-path")
+
+    headers = client._http_db.session.request.call_args[1].get("headers", {})
+    assert headers.get("authorization") == "Bearer my-token"
 
 
 def test_credentials_use_env_matches_legacy_singleton_auth(monkeypatch):
@@ -126,7 +142,7 @@ def test_credentials_empty_is_rejected():
 
 
 def test_credentials_extra_headers_only_is_rejected():
-    """``extra_headers`` augments an auth mode; alone it is still no auth mode."""
+    """``extra_headers`` alone is not a valid auth mode."""
     with pytest.raises(mlrun.errors.MLRunInvalidArgumentError):
         Credentials(extra_headers={"X-IGZ-Authenticator-Kind": "sa"})
 
