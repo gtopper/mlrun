@@ -21,6 +21,7 @@ import pytest
 from deepdiff import DeepDiff
 
 import mlrun
+import mlrun.common.schemas
 import mlrun.errors
 from mlrun import code_to_function
 from mlrun.datastore.datastore_profile import DatastoreProfileRabbitMQ
@@ -156,7 +157,7 @@ def test_nuclio_deploy_set_token_name():
 
 
 def _mock_nuclio_deploy(function):
-    """Wire a nuclio function so ``deploy()`` submits without a live cluster."""
+    """Mock deploy internals for submit-only tests."""
     db = mlrun.get_run_db()
     db.deploy_nuclio_function = MagicMock(
         return_value={"data": {"status": {}, "spec": function.spec}}
@@ -167,7 +168,7 @@ def _mock_nuclio_deploy(function):
 
 
 def test_nuclio_deploy_wait_false_skips_wait_and_enrich():
-    """``deploy(wait=False)`` submits, returns ``self``, and skips wait/enrich."""
+    """``deploy(wait=False)`` submits and skips wait/enrich."""
     function: mlrun.runtimes.RemoteRuntime = mlrun.new_function("tst", kind="nuclio")
     _mock_nuclio_deploy(function)
 
@@ -192,7 +193,7 @@ def test_serving_deploy_forwards_wait():
 
 
 def test_nuclio_deploy_wait_true_waits_and_enriches():
-    """``deploy(wait=True)`` preserves the legacy wait+enrich behavior."""
+    """``deploy(wait=True)`` keeps legacy wait+enrich behavior."""
     function: mlrun.runtimes.RemoteRuntime = mlrun.new_function("tst", kind="nuclio")
     _mock_nuclio_deploy(function)
 
@@ -201,6 +202,43 @@ def test_nuclio_deploy_wait_true_waits_and_enriches():
     function._wait_for_function_deployment.assert_called_once()
     function._enrich_command_from_status.assert_called_once()
     assert result == "http://invocation"
+
+
+def test_wait_for_deployment_finalizes_after_submit():
+    """``deploy(wait=False)`` + ``wait_for_deployment()`` finalizes normally."""
+    function: mlrun.runtimes.RemoteRuntime = mlrun.new_function("tst", kind="nuclio")
+    _mock_nuclio_deploy(function)
+
+    submitted = function.deploy(wait=False)
+    assert submitted is function
+    function._wait_for_function_deployment.assert_not_called()
+    function._enrich_command_from_status.assert_not_called()
+
+    result = function.wait_for_deployment()
+    function._wait_for_function_deployment.assert_called_once()
+    function._enrich_command_from_status.assert_called_once()
+    assert result == "http://invocation"
+
+
+def test_wait_for_deployment_clears_background_tasks_after_processing():
+    """Model-endpoint background tasks are consumed once."""
+    function: mlrun.runtimes.RemoteRuntime = mlrun.new_function("tst", kind="nuclio")
+    function._wait_for_function_deployment = MagicMock()
+    function._enrich_command_from_status = MagicMock(return_value="http://invocation")
+    function._check_model_endpoint_task_state = MagicMock()
+
+    task = mlrun.common.schemas.BackgroundTask(
+        metadata=mlrun.common.schemas.BackgroundTaskMetadata(name="t"),
+        spec=mlrun.common.schemas.BackgroundTaskSpec(),
+        status=mlrun.common.schemas.BackgroundTaskStatus(state="running"),
+    )
+    function._deploy_background_tasks = {"background_tasks": [task.dict()]}
+
+    function.wait_for_deployment()
+    function.wait_for_deployment()
+
+    function._check_model_endpoint_task_state.assert_called_once()
+    assert function._deploy_background_tasks == {"background_tasks": []}
 
 
 def test_v3io_stream_trigger():
